@@ -1,3 +1,6 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Agbalumo&display=swap');
+
 body {
-    background-color: skyblue;
+    font-family: 'Agbalumo', cursive;
 }

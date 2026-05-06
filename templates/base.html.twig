@@ -1,24 +1,58 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
     <head>
         <meta charset="UTF-8">
-        <title>{% block title %}Welcome!{% endblock %}</title>
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}Oxymaux{% endblock %}</title>
+        <link rel="icon" href="{{ asset('favicon.ico') }}" />
+        <script src="https://kit.fontawesome.com/274d342162.js" crossorigin="anonymous"></script>
         {% block stylesheets %}
+            {{ encore_entry_link_tags('app') }}
         {% endblock %}
 
         {% block javascripts %}
-            {% block importmap %}{{ importmap('app') }}{% endblock %}
+            {{ encore_entry_script_tags('app') }}
         {% endblock %}
-
-        {% set frankenphpHotReload = app.request.server.get('FRANKENPHP_HOT_RELOAD') %}
-        {% if frankenphpHotReload %}
-        <meta name="frankenphp-hot-reload:url" content="{{ frankenphpHotReload }}">
-        <script src="https://cdn.jsdelivr.net/npm/idiomorph"></script>
-        <script src="https://cdn.jsdelivr.net/npm/frankenphp-hot-reload/+esm" type="module"></script>
-        {% endif %}
     </head>
-    <body>
+    <body class="flex flex-col min-h-screen">
+        <img src="{{ asset('images/background2.jpg') }}" alt="Fond Oxymaux" class="fixed inset-0 w-full h-full -z-10 object-cover" />
+        <header class="fixed top-0 left-0 z-50 w-full backdrop-blur-lg bg-white/60">
+            <nav class="max-w-6xl mx-auto">
+                <div class="flex items-center justify-between px-4 py-3">
+                    <a class="text-4xl text-white text-shadow-md text-shadow-black" href="{{ path('app_home') }}"><img src="{{ asset('images/logo2.jpeg') }}" alt="Logo Oxymaux" class="h-30 w-30 rounded-full"></a>
+                    <ul class="flex-1 flex justify-around text-xl">
+                        <li>
+                            <a href="{{ path('app_home') }}" class="{% if app.request.attributes.get('_route') == 'app_home' %}text-sky-300{% endif %}">Accueil</a>
+                        </li>
+                        <li>
+                            <a href="{{ path('app_parcours') }}" class="{% if app.request.attributes.get('_route') == 'app_parcours' %}text-sky-300{% endif %}">Mon parcours</a>
+                        </li>
+                        <li>
+                            <a href="{{ path('app_animaux') }}" class="{% if app.request.attributes.get('_route') == 'app_animaux' %}text-sky-300{% endif %}">Mes animaux</a>
+                        </li>
+                        <li>
+                            <a href="{{ path('app_services') }}" class="{% if app.request.attributes.get('_route') == 'app_services' %}text-sky-300{% endif %}">Mes services</a>
+                        </li>
+                        <li>
+                            <a href="{{ path('app_tarifs') }}" class="{% if app.request.attributes.get('_route') == 'app_tarifs' %}text-sky-300{% endif %}">Mes tarifs</a>
+                        </li>
+                        {# <li>
+                            <a href="{{ path('app_planning') }}" class="{% if app.request.attributes.get('_route') == 'app_planning' %}text-sky-300{% endif %}">Mon planning</a>
+                        </li> #}
+                        <li>
+                            <a href="{{ path('app_contact') }}" class="{% if app.request.attributes.get('_route') == 'app_contact' %}text-sky-300{% endif %}">Contact</a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </header>
+        <main class="mt-20 flex-1">
         {% block body %}{% endblock %}
+        </main>
+        <footer class="mt-10 z-50">
+            <div class="text-lg text-center py-4">
+                &copy; {{ "now"|date("Y") }} Oxymaux. Tous droits réservés.
+            </div>
+        </footer>
     </body>
 </html>
