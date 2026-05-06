@@ -17,10 +17,12 @@
     <body class="flex flex-col min-h-screen">
         <img src="{{ asset('images/background2.jpg') }}" alt="Fond Oxymaux" class="fixed inset-0 w-full h-full -z-10 object-cover" />
         <header class="fixed top-0 left-0 z-50 w-full backdrop-blur-lg bg-white/60">
-            <nav class="max-w-6xl mx-auto">
+            <nav data-controller="navbar" class="max-w-6xl mx-auto">
                 <div class="flex items-center justify-between px-4 py-3">
-                    <a class="text-4xl text-white text-shadow-md text-shadow-black" href="{{ path('app_home') }}"><img src="{{ asset('images/logo2.jpeg') }}" alt="Logo Oxymaux" class="h-30 w-30 rounded-full"></a>
-                    <ul class="flex-1 flex justify-around text-xl">
+                    <div class="md:hidden flex flex-col items-center">
+                        <span class="text-2xl text-sky-300 cursor-pointer" data-navbar-target="menuButton" data-action="click->navbar#toggleMenu"><i class="fa-solid fa-bars"></i></span>
+                    </div>
+                    <ul class="hidden flex-1 md:flex justify-around text-xl">
                         <li>
                             <a href="{{ path('app_home') }}" class="{% if app.request.attributes.get('_route') == 'app_home' %}text-sky-300{% endif %}">Accueil</a>
                         </li>
@@ -36,9 +38,35 @@
                         <li>
                             <a href="{{ path('app_tarifs') }}" class="{% if app.request.attributes.get('_route') == 'app_tarifs' %}text-sky-300{% endif %}">Mes tarifs</a>
                         </li>
-                        {# <li>
+                        <li>
                             <a href="{{ path('app_planning') }}" class="{% if app.request.attributes.get('_route') == 'app_planning' %}text-sky-300{% endif %}">Mon planning</a>
-                        </li> #}
+                        </li>
+                        <li>
+                            <a href="{{ path('app_contact') }}" class="{% if app.request.attributes.get('_route') == 'app_contact' %}text-sky-300{% endif %}">Contact</a>
+                        </li>
+                    </ul>
+                    <a class="text-4xl text-white text-shadow-md text-shadow-black" href="{{ path('app_home') }}"><img src="{{ asset('images/logo2.jpeg') }}" alt="Logo Oxymaux" class="h-30 w-30 rounded-full"></a>
+                </div>
+                <div class="hidden md:hidden" data-navbar-target="mobileMenu">
+                    <ul class="flex flex-col items-center text-xl space-y-4 py-4">
+                        <li>
+                            <a href="{{ path('app_home') }}" class="{% if app.request.attributes.get('_route') == 'app_home' %}text-sky-300{% endif %}">Accueil</a>
+                        </li>
+                        <li>
+                            <a href="{{ path('app_parcours') }}" class="{% if app.request.attributes.get('_route') == 'app_parcours' %}text-sky-300{% endif %}">Mon parcours</a>
+                        </li>
+                        <li>
+                            <a href="{{ path('app_animaux') }}" class="{% if app.request.attributes.get('_route') == 'app_animaux' %}text-sky-300{% endif %}">Mes animaux</a>
+                        </li>
+                        <li>
+                            <a href="{{ path('app_services') }}" class="{% if app.request.attributes.get('_route') == 'app_services' %}text-sky-300{% endif %}">Mes services</a>
+                        </li>
+                        <li>
+                            <a href="{{ path('app_tarifs') }}" class="{% if app.request.attributes.get('_route') == 'app_tarifs' %}text-sky-300{% endif %}">Mes tarifs</a>
+                        </li>
+                        <li>
+                            <a href="{{ path('app_planning') }}" class="{% if app.request.attributes.get('_route') == 'app_planning' %}text-sky-300{% endif %}">Mon planning</a>
+                        </li>
                         <li>
                             <a href="{{ path('app_contact') }}" class="{% if app.request.attributes.get('_route') == 'app_contact' %}text-sky-300{% endif %}">Contact</a>
                         </li>

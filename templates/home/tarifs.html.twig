@@ -4,7 +4,25 @@
 
 {% block body %}
 
-<div>
-    <h1 class="text-6xl text-white text-shadow-md text-shadow-black text-center mt-20">Mes tarifs</h1>
-</div>
+<section class=" mx-auto mt-10 px-4">
+    <h1 class="text-4xl text-center mt-20">Mes tarifs</h1>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-6 mt-10 max-w-7xl mx-auto">
+        <div class="bg-lime-100 bg-opacity-80 rounded-lg shadow-lg py-6 flex flex-col items-center">
+            <h3 class="text-xl text-center mb-4 underline underline-offset-4"><i class="fa-solid fa-dog"></i><span class="ml-4">Éducation canine</span></h3>
+            <p class="font-extralight text-center">Séances individuelles à partir de 50€</p>
+        </div>
+        <div class="bg-red-100 bg-opacity-80 rounded-lg shadow-lg py-6 flex flex-col items-center">
+            <h3 class="text-xl text-center mb-4 underline underline-offset-4"><i class="fa-solid fa-hand-holding-heart"></i><span class="ml-4">Médiation animale</span></h3>
+            <p class="font-extralight text-center">Séances individuelles à partir de 60€</p>
+        </div>
+        <div class="bg-indigo-100 bg-opacity-80 rounded-lg shadow-lg py-6 flex flex-col items-center">
+            <h3 class="text-xl text-center mb-4 underline underline-offset-4"><i class="fa-solid fa-chalkboard-teacher"></i><span class="ml-4">Ateliers thématiques</span></h3>
+            <p class="font-extralight text-center">Ateliers à partir de 30€ par personne</p>
+        </div>
+        <div class="bg-yellow-100 bg-opacity-80 rounded-lg shadow-lg py-6 flex flex-col items-center">
+            <h3 class="text-xl text-center mb-4 underline underline-offset-4"><i class="fa-solid fa-user-check"></i><span class="ml-4">Consultations personnalisées</span></h3>
+            <p class="font-extralight text-center">Consultations à partir de 70€</p>
+        </div>
+    </div>
+</section>
 {% endblock %}

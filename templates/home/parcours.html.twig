@@ -4,7 +4,29 @@
 
 {% block body %}
 
-<div>
-    <h1 class="text-6xl text-white text-shadow-md text-shadow-black text-center mt-20">Mon parcours</h1>
-</div>
+<section class=" mx-auto mt-10 px-4">
+    <h1 class="text-4xl text-center mt-20">Mon parcours</h1>
+    <div class=" mt-10 p-6 max-w-4xl mx-auto">
+        <p data-controller="age" class="text-lg text-justify font-extralight">
+        Je m'appelle Noémie Thonneau, j'ai <span data-age-target="age"></span> ans, et je voudrais partager un peu de mon histoire avec vous.<br><br>
+        J'ai grandi entourée d'animaux, et ma passion pour eux vient surtout de mon grand-père, l'homme qui m'a élevée et m'a appris à venir en aide aux autres. Il sauvait toutes sortes d'animaux (oiseaux, chats, hérissons, singes, chiens, poissons...) et m'a inculqué les valeurs de générosité, de politesse et de franchise.<br><br>
+        Aujourd'hui, j'ai mon propre parcours : je suis une hypersensible au grand cœur qui ne supporte pas l'injustice et aime comprendre et aider les autres. Très jeune, j'ai pris la responsabilité de m'occuper de divers animaux. En CM2, j'ai eu ma première chienne, Perle, que je promenais et nourrissais autant que ma maman. À 14 ans, j'ai reçu Cyllénio, un petit poulain qui est tombé gravement malade, et j'ai pris en charge cette lourde responsabilité avec détermination.<br><br>
+        Aujourd'hui j'ai toute sorte d'animaux lapins, cochon d'inde, tortue, chats, chiens, cheval...
+        </p>
+    </div>
+    <span class="w-xs md:w-xl h-px bg-sky-300 block mx-auto my-10"></span>
+    <div class="bg-sky-100 bg-opacity-80 rounded-lg shadow-lg mt-10 p-6 max-w-4xl mx-auto">
+        <h2 class="text-3xl text-center mb-6">Mon parcours professionnel</h2>
+        <ul class="text-lg text-justify font-extralight space-y-4 list-disc list-inside">
+            <li>Après l'obtention de ma licence de psychologie, j'ai suivi une formation chez <em class="underline underline-offset-4 text-xl">HUMANIMALIS</em>, où j'ai acquis des compétences en tant qu'intervenante en médiation par l'animal, ainsi qu'en comportementementaliste canin.</li>
+            <li>En septembre 2021, j'ai obtenu <em class="underline underline-offset-4 text-xl">l'ACACED</em> (attestation de connaissance pour les Animaux de Compagnie d'Espèces Domestiques), conformément à l'article L214-6-1 du Code Rural et de la Pêche Maritime, qui exige des connaissances minimales pour travailler avec des animaux de compagnie domestiques.</li>
+            <li>En janvier 2022, j'ai suivi la formation <em class="underline underline-offset-4 text-xl">PECCRAM</em> (programme d'éducation à la Connaissance du Chien et au Risque d'Accident par Morsure).</li>
+            <li>En septembre 2022 j'ai suivi la formation <em class="underline underline-offset-4 text-xl">Cynophobie</em> avec <em class="underline underline-offset-4 text-xl">Eduka'chien</em>.</li>
+            <li>En mai 2024, je me suis formée en <em class="underline underline-offset-4 text-xl">Coach de mantrailing</em> (recherche d'humain disparu), la formation a été encadrée par <em class="underline underline-offset-4 text-xl">Hans Mergrits</em>.</li>
+            <li>En juillet 2024, j'ai réalisé un <em class="underline underline-offset-4 text-xl">stage réactivité congénère</em> avec <em class="underline underline-offset-4 text-xl">Carolle Sayagh</em>.</li>
+            <li>En 2025 je me suis formée chez <em class="underline underline-offset-4 text-xl">Cynotopia</em> "impact réactivité".</li>
+            <li>Je suis impatiente de vous rencontrer, d'échanger avec vous, et de contribuer à votre mieux-être.</li>
+        </ul>
+    </div>
+</section>
 {% endblock %}
