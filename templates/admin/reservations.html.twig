@@ -40,7 +40,7 @@
                             <div class="w-full bg-sky-100 p-4 rounded-lg shadow-lg relative">
 
                                 {# Boutons de gestion de l'activité#}
-                                <div class="absolute -right-1 -top-1 flex gap-1 tet-xs">
+                                <div class="{% if date and date|date('Y-m-d') < 'now'|date('Y-m-d') %}hidden{% endif %} absolute -right-1 -top-1 flex gap-1 text-xs">
                                     <a href="{{ path('app_activity_edit', {'id': activity.id}) }}" class="bg-[#7a96a1] text-white text-shadow-md text-shadow-black p-2 rounded shadow-md" title="Modifier l'activité"><i class="fa-solid fa-pen-to-square"></i></a>
                                     <div data-controller="confirm">
                                         <button data-action="click->confirm#openModal" class="bg-white text-red-500 border border-red-500 p-2 rounded shadow-md cursor-pointer" title="Annuler l'activité">
@@ -96,7 +96,7 @@
                                     <ul class="text-sm space-y-2">
                                         {% for reservation in reservationsValides %}
                                             <div data-controller="confirm" class="flex items-center gap-2">
-                                                <button data-action="click->confirm#openModal" class="text-red-500 hover:underline cursor-pointer">
+                                                <button data-action="click->confirm#openModal" class="{% if date and date|date('Y-m-d') < 'now'|date('Y-m-d') %}hidden{% endif %} text-red-500 hover:underline cursor-pointer">
                                                     <i class="fa-solid fa-trash" title="Annuler l'inscription"></i>
                                                 </button>
                                                 <li class="list-disc list-inside ml-2">
@@ -144,7 +144,7 @@
                                 {% elseif activity.openToAll or activity.nbPlaces > 0 %}
                                     <p class="text-gray-700">Aucun participant inscrit pour cette activité.</p>
                                 {% endif %}
-                                {% if activity.openToAll or (activity.nbPlaces > 0 and activity.nbPlaces > activity.reservations|length) %}
+                                {% if not (date and date|date('Y-m-d') < 'now'|date('Y-m-d')) and (activity.openToAll or (activity.nbPlaces > 0 and activity.nbPlaces > activity.reservations|length)) %}
                                     <a href="{{ path('app_activity_register_admin', {'id': activity.id}) }}" class="mt-4 inline-block px-2 py-1 bg-[#7a96a1] text-white text-sm text-shadow-md text-shadow-black rounded hover:bg-[#6b8490] transition">Inscrire un participant <i class="fa-solid fa-plus"></i></a>
                                 {% elseif activity.nbPlaces == 0 and activity.comment %}
                                     <p>{{ activity.comment }}</p>
