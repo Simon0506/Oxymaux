@@ -4,7 +4,117 @@
 
 {% block body %}
 
-<section class=" mx-auto mt-10 px-4">
-    <h1 class="text-4xl text-center mt-20">Mes services</h1>
+<section class="mx-auto mt-10 px-4">
+    <h1 class="text-4xl text-center mt-20 font-semibold mb-10">Mes services</h1>
+    <div class="w-full flex justify-end items-center gap-6 mx-auto max-w-7xl">
+        {% if app.user and 'ROLE_ADMIN' in app.user.roles %}
+        <a href="{{ path('app_services_new') }}" class="px-4 py-2 bg-[#7a96a1] text-white rounded hover:bg-[#6b8490] transition">Ajouter un service <i class="fa-solid fa-plus"></i></a>
+        <a href="{{ path('app_services_sort') }}" class="px-4 py-2 bg-[#7a96a1] text-white rounded hover:bg-[#6b8490] transition">Trier les services <i class="fa-solid fa-sort"></i></a>
+        {% endif %}
+    </div>
+    {% for service in services %}
+        {% if service != services|first %}
+        <span class="block w-1/2 h-px bg-sky-300 mx-auto my-10 rounded-full"></span>
+        {% endif %}
+        <div class="flex flex-col md:flex-row justify-center items-center gap-6 mt-10 mx-auto">
+            <div class="w-full flex flex-col justify-center items-center gap-6 mt-10 max-w-7xl {% if loop.index is odd %} md:flex-row{% else %}md:flex-row-reverse{% endif %}">
+                <div data-controller="list" class="flex-1 flex flex-col gap-4">
+                    <h2 class="text-3xl font-semibold flex justify-center items-center gap-2">
+                        {% if service.logo %}
+                            <img src="{{ asset('images/' ~ service.logo) }}" alt="{{ service.name }}" class="w-12 h-12 object-cover">
+                        {% endif %}
+                        <span>{{ service.name }}</span>
+                    </h2>
+                    <p class="text-lg text-center list-disc w-full">
+                        {{ service.description|raw }}
+                    </p>
+                </div>
+                {% if service.image %}
+                    <img src="{{ asset('images/' ~ service.image) }}" alt="Services" class="w-full max-w-md max-h-64 rounded-xl shadow-lg object-cover">
+                {% else %}
+                    <div class="w-full max-w-md h-64 rounded-xl shadow-lg bg-sky-200 flex flex-col items-center justify-center">
+                        <i class="fa-solid fa-paw text-sky-300 text-6xl"></i>
+                        <p class="text-sky-300 text-2xl font-semibold mt-4">Image à venir</p>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="bg-yellow-100 rounded-xl shadow-lg shadow-gray-500 py-6 flex flex-col items-center relative w-sm h-full relative">
+                <div class="absolute -top-1 left-1 text-2xl text-sky-300">
+                    <i class="fa-solid fa-bookmark"></i>
+                </div>
+                <h3 class="text-2xl text-center mb-4 underline underline-offset-4"><span class="ml-4 font-semibold">Tarifs</span></h3>
+                {% if tarifsByService[service.id]|length > 0 %}
+                    {% for tarif in tarifsByService[service.id] %}
+                        <div class="flex flex-col items-center mb-4 w-full">
+                            <p class="text-center text-xl">{{ tarif.name }} : <strong>{{ tarif.price }} {{ tarif.type }}</strong></p>
+                            {% if tarif.comment %}
+                                <p class="text-center text-gray-600">{{ tarif.comment }}</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                    {% if service.kmPrice %}
+                        <p class="text-center">Frais de déplacement à prévoir (<a href="#priceKmSection" class="underline hover:text-blue-500 text-sm">voir détails <i class="fas fa-arrow-down"></i></a>)</p>
+                    {% endif %}
+                {% else %}
+                    <p class="text-center text-gray-600">Sur devis.</p>
+                    <a href="{{ path('app_contact') }}" class="mt-4 inline-block px-4 py-2 bg-sky-300 rounded-full hover:bg-sky-400 transition">Me contacter <i class="fa-solid fa-envelope"></i></a>
+                {% endif %}
+            </div>
+        </div>
+        {% if app.user and 'ROLE_ADMIN' in app.user.roles %}
+        <div data-controller="confirm" class="flex justify-center mt-4">
+            <a href="{{ path('app_services_edit', {'id': service.id}) }}" class="px-4 py-2 bg-sky-300 rounded hover:bg-sky-400 transition">Modifier</a>
+            <button data-action="click->confirm#openModal" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition ml-2 cursor-pointer">Supprimer</button>
+            <div class="hidden fixed inset-0 flex items-center justify-center z-50" data-confirm-target="modal">
+                <div class="bg-white p-6 rounded-lg shadow-lg shadow-sky-500">
+                    <p class="mb-4">Êtes-vous sûr de vouloir supprimer ce service ?</p>
+                    <p class="mb-4 text-center"><strong>{{ service.name }}</strong></p>
+                    <div class="flex justify-center gap-4">
+                        <a href="{{ path('app_services_delete', {'id': service.id}) }}" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition">Oui, supprimer</a>
+                        <button data-action="click->confirm#cancel" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition cursor-pointer">Non, annuler</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    {% endfor %}
+    <div class="block w-1/2 h-px bg-sky-300 mx-auto my-10 rounded-full"></div>
+    <div id="priceKmSection" class="w-full mx-auto max-w-7xl relative">
+        <h2 class="text-3xl font-semibold flex justify-center items-center gap-2">
+            <i class="fa-solid fa-car-side"></i> Frais de déplacement
+        </h2>
+        {% if app.user and 'ROLE_ADMIN' in app.user.roles %}
+            <div class="flex justify-end items-center gap-6 mt-4 absolute -top-10 right-0">
+                <a href="{{ path('app_price_km_add') }}" class="px-4 py-2 bg-[#7a96a1] text-white rounded hover:bg-[#6b8490] transition">Ajouter des frais de déplacement <i class="fa-solid fa-plus"></i></a>
+            </div>
+        {% endif %}
+        {% if priceKms|length > 0 %}
+            <div class="flex flex-col items-center gap-2 mt-6">
+            {% for priceKm in priceKms %}
+                <div class="w-full max-w-2xl mx-auto text-center text-lg relative">
+                    <p>De {{priceKm.minLength}} à {{priceKm.maxLength}} km : <strong>{{ priceKm.price }} €</strong></p>
+                    {% if app.user and 'ROLE_ADMIN' in app.user.roles %}
+                    <div data-controller="confirm" class="absolute top-0 right-0">
+                        <a href="{{ path('app_price_km_edit', {'id': priceKm.id}) }}" class="px-2 py-1 bg-sky-300 rounded hover:bg-sky-400 transition text-sm">Modifier</a>
+                        <button data-action="click->confirm#openModal" class="px-2 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 transition ml-2 cursor-pointer">Supprimer</button>
+                        <div data-confirm-target="modal" class="hidden fixed inset-0 flex items-center justify-center z-50">
+                            <div class="bg-white p-6 rounded-lg shadow-lg shadow-sky-500">
+                                <p class="mb-4">Êtes-vous sûr de vouloir supprimer ce service ?</p>
+                                <p class="mb-4 text-center">De {{ priceKm.minLength }} à {{ priceKm.maxLength }} km : <strong>{{ priceKm.price }} €</strong></p>
+                                <div class="flex justify-center gap-4">
+                                    <a href="{{ path('app_price_km_delete', {'id': priceKm.id}) }}" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition">Oui, supprimer</a>
+                                    <button data-action="click->confirm#cancel" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition cursor-pointer">Non, annuler</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-center text-gray-600 mt-10">Aucun frais de déplacement défini pour le moment.</p>
+        {% endif %}
+    </div>
 </section>
 {% endblock %}

@@ -1,0 +1,23 @@
+<h1>Annulation de réservation</h1>
+<p>Bonjour {{ reservation.dog.user.firstname }},</p>
+<p>Je vous informe que votre inscription pour l'activité "{{ reservation.activity.service.name }}" du {{ reservation.activity.date|date('d/m/Y') }} a été annulée.</p>
+{% if reason %}
+    <p><strong>Raison de l'annulation :</strong> {{ reason }}</p>
+{% endif %}
+<p>Pour rappel, voici les détails de l'activité :</p>
+<ul>
+    <li><strong>Nom de l'activité :</strong> {{ reservation.activity.service.name }}</li>
+    <li><strong>Date :</strong> {{ reservation.activity.date|date('d/m/Y') }}</li>
+    {% if reservation.activity.start and reservation.activity.end %}
+        <li><strong>Horaires :</strong> de {{ reservation.activity.start|date('H:i') }} à {{ reservation.activity.end|date('H:i') }}</li>
+    {% elseif reservation.activity.start %}
+        <li><strong>Heure de début :</strong> {{ reservation.activity.start|date('H:i') }}</li>
+    {% endif %}
+    {% if reservation.activity.comment %}
+        <li><strong>Informations supplémentaires :</strong> {{ reservation.activity.comment }}</li>
+    {% endif %}
+</ul>
+<p>Si vous souhaitez vous réinscrire à cette activité ou à une autre, n'hésitez pas à consulter le <a href="{{ url('app_planning') }}">planning</a> pour découvrir les différentes activités et disponibilités.</p>
+<p>Si vous avez des questions ou souhaitez plus d'informations, n'hésitez pas à me contacter.</p>
+<p>Bien cordialement,</p>
+<p>Noémie, gérante d'Oxymaux</p>

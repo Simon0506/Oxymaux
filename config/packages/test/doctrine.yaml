@@ -1,0 +1,12 @@
+doctrine:
+    dbal:
+        connections:
+            default:
+                # Force Doctrine à réutiliser la connexion statique de DAMA
+                driver_class: DAMA\DoctrineTestBundle\Doctrine\DBAL\StaticDriver
+                
+                # Force le moteur InnoDB pour TOUTES les tables créées dans cette connexion
+                default_table_options:
+                    engine: InnoDB
+                    charset: utf8mb4
+                    collate: utf8mb4_unicode_ci

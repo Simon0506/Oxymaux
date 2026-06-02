@@ -1,0 +1,31 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Oxymaux - Mentions Légales{% endblock %}
+
+{% block body %}
+    <section class="max-w-7xl mx-auto mt-10 px-4">
+        <h1 class="text-4xl text-center mt-20 font-semibold">Mentions Légales</h1>
+        <div class="bg-white rounded-lg shadow-md shadow-sky-300 p-6 mt-10">
+            <h2 class="text-2xl font-semibold mb-4">1. Informations légales</h2>
+            <p class="mb-4">Le site Oxymaux est édité par Noémie Thonneau, auto-entrepreneuse en médiation animale.</p>
+            <p class="mb-4">Adresse : 92 Rue Charles Hervé, 17750 Etaules</p>
+            <p class="mb-4">Email : oxymaux@gmail.com</p>
+            <p class="mb-4">SIRET : 123 456 789 00000</p>
+            <h2 class="text-2xl font-semibold mb-4">2. Hébergeur</h2>
+            <p class="mb-4">Le site est hébergé par Ionos, dont les coordonnées sont :</p>
+            <p class="mb-4">Adresse : 123 Rue de l'Hébergement, 75000 Paris</p>
+            <p class="mb-4">Email : support@ionos.fr</p>
+            <p class="mb-4">Téléphone : 01 23 45 67 89</p>
+            <h2 class="text-2xl font-semibold mb-4">3. Propriété intellectuelle</h2>
+            <p class="mb-4">Tous les contenus présents sur ce site, y compris les textes, images, logos, et autres éléments graphiques, sont la propriété exclusive de Noémie Thonneau ou de leurs auteurs respectifs. Toute reproduction, distribution, ou utilisation de ces contenus sans autorisation préalable est strictement interdite.</p>
+            <h2 class="text-2xl font-semibold mb-4">4. Responsabilité</h2>
+            <p class="mb-4">Noémie Thonneau ne saurait être tenue responsable des dommages directs ou indirects résultant de l'utilisation ou de l'impossibilité d'utiliser ce site, y compris les pertes de données ou les interruptions de service.</p>
+            <h2 class="text-2xl font-semibold mb-4">5. Données personnelles</h2>
+            <p class="mb-4">Pour plus d'informations sur la collecte et l'utilisation de vos données personnelles, veuillez consulter notre <a href="{{ path('app_politique_confidentialite') }}" class="text-blue-500 hover:underline">Politique de Confidentialité</a>.</p>
+            <h2 class="text-2xl font-semibold mb-4">6. Modifications des mentions légales</h2>
+            <p class="mb-4">Nous nous réservons le droit de modifier ces mentions légales à tout moment. Toute modification sera publiée sur cette page avec une date de mise à jour.</p>
+            <h2 class="text-2xl font-semibold mb-4">7. Contact</h2>
+            <p class="mb-4">Pour toute question concernant ces mentions légales, veuillez nous contacter à l'adresse email suivante : oxymaux@gmail.com</p>
+        </div>
+    </section>
+{% endblock %}

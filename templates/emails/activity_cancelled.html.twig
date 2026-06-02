@@ -1,0 +1,9 @@
+<h1>Annulation de l'activité {{ activity.service.name }}</h1>
+<p>Bonjour,</p>
+<p>Je suis désolée de vous informer que l'activité <strong>{{ activity.service.name }}</strong> prévue le {{ activity.date|date('d/m/Y') }} {% if activity.start and activity.end %}de {{ activity.start|date('H:i') }} à {{ activity.end|date('H:i') }} {% elseif activity.start %}à partir de {{ activity.start|date('H:i') }} {% elseif activity.end %}jusqu'à {{ activity.end|date('H:i') }} {% endif %}a été annulée.</p>
+{% if reason %}
+    <p><strong>Raison de l'annulation :</strong> {{ reason }}</p>
+{% endif %}
+<p>Je vous prie de m'excuser pour ce désagrément. Si vous avez des questions ou besoin d'assistance, n'hésitez pas à me contacter.</p>
+<p>Cordialement,</p>
+<p>Noémie, gérante Oxymaux</p>

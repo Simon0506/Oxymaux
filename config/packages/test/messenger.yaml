@@ -1,0 +1,7 @@
+# config/packages/test/messenger.yaml
+framework:
+    messenger:
+        transports:
+            # Force tous les transports à être synchrones pendant les tests
+            async: 'sync://'
+            failed: 'sync://'

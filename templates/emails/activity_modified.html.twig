@@ -1,0 +1,22 @@
+<h1>Modification de l'activité {{ oldActivity.service.name }}</h1>
+<p>Bonjour,</p>
+<p>Je vous informe que l'activité <strong>{{ oldActivity.service.name }}</strong> prévue le {{ oldActivity.date|date('d/m/Y') }} {% if oldActivity.start and oldActivity.end %}de {{ oldActivity.start|date('H:i') }} à {{ oldActivity.end|date('H:i') }} {% elseif oldActivity.start %}à partir de {{ oldActivity.start|date('H:i') }} {% elseif oldActivity.end %}jusqu'à {{ oldActivity.end|date('H:i') }} {% endif %}a été modifiée.</p>
+<p>Voici les nouvelles informations concernant cette activité :</p>
+<ul>
+    <li><strong>Nom de l'activité :</strong> {{ activity.service.name }}</li>
+    <li><strong>Date :</strong> {{ activity.date|date('d/m/Y') }}</li>
+    {% if activity.start and activity.end %}
+        <li><strong>Heure :</strong> de {{ activity.start|date('H:i') }} à {{ activity.end|date('H:i') }}</li>
+    {% elseif activity.start %}
+        <li><strong>Heure de début :</strong> à partir de {{ activity.start|date('H:i') }}</li>
+    {% elseif activity.end %}
+        <li><strong>Heure de fin :</strong> jusqu'à {{ activity.end|date('H:i') }}</li>
+    {% endif %}
+    {% if activity.comment %}
+    <li><strong>Informations supplémentaires :</strong> {{ activity.comment }}</li>
+    {% endif %}
+</ul>
+<p>Les réservations validées ou en attente de validation restent inchangées pour cette nouvelle version de l'activité. Cependant, si ces changements ne vous conviennent pas, vous pouvez annuler votre réservation depuis votre <a href="{{ url('app_reservations') }}">espace client</a>.</p>
+<p>Je vous prie de m'excuser pour ce désagrément. Si vous avez des questions ou besoin d'assistance, n'hésitez pas à me contacter.</p>
+<p>Cordialement,</p>
+<p>Noémie, gérante Oxymaux</p>

@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="scroll-smooth">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>{% block title %}Oxymaux{% endblock %}</title>
         <link rel="icon" href="{{ asset('favicon.ico') }}" />
         <script src="https://kit.fontawesome.com/274d342162.js" crossorigin="anonymous"></script>
+        <script src="https://cdn.tiny.cloud/1/njz04iv33qs0m7g6o93we1eh8h9ztlda4n44cftnk446irc9/tinymce/8/tinymce.min.js" referrerpolicy="origin" crossorigin="anonymous"></script>
         {% block stylesheets %}
             {{ encore_entry_link_tags('app') }}
         {% endblock %}
@@ -16,70 +17,135 @@
     </head>
     <body class="flex flex-col min-h-screen">
         <img src="{{ asset('images/background2.jpg') }}" alt="Fond Oxymaux" class="fixed inset-0 w-full h-full -z-10 object-cover" />
-        <header class="fixed top-0 left-0 z-50 w-full backdrop-blur-lg bg-white/60">
+        <header class="fixed top-0 left-0 z-50 w-full backdrop-blur-lg bg-white/60 font-semibold h-30">
             <nav data-controller="navbar" class="max-w-6xl mx-auto">
                 <div class="flex items-center justify-between px-4 py-3">
                     <div class="md:hidden flex flex-col items-center">
-                        <span class="text-2xl text-sky-300 cursor-pointer" data-navbar-target="menuButton" data-action="click->navbar#toggleMenu"><i class="fa-solid fa-bars"></i></span>
+                        <span class="text-2xl text-sky-300 cursor-pointer" data-navbar-target="menuButton" data-action="click->navbar#toggleMenu">
+                            <i class="fa-solid fa-bars"></i>
+                        </span>
                     </div>
-                    <ul class="hidden flex-1 md:flex justify-around text-xl">
+                    
+                    <ul class="hidden flex-1 md:flex justify-around gap-2 items-center">
                         <li>
-                            <a href="{{ path('app_home') }}" class="{% if app.request.attributes.get('_route') == 'app_home' %}text-sky-300{% endif %}">Accueil</a>
+                            <a href="{{ path('app_home') }}" class="{% if app.request.attributes.get('_route') == 'app_home' %}text-sky-300 text-shadow-md text-shadow-black{% endif %} hover:text-sky-300">Accueil</a>
                         </li>
                         <li>
-                            <a href="{{ path('app_parcours') }}" class="{% if app.request.attributes.get('_route') == 'app_parcours' %}text-sky-300{% endif %}">Mon parcours</a>
+                            <a href="{{ path('app_parcours') }}" class="{% if app.request.attributes.get('_route') == 'app_parcours' %}text-sky-300 text-shadow-md text-shadow-black{% endif %} hover:text-sky-300">Parcours</a>
                         </li>
                         <li>
-                            <a href="{{ path('app_animaux') }}" class="{% if app.request.attributes.get('_route') == 'app_animaux' %}text-sky-300{% endif %}">Mes animaux</a>
+                            <a href="{{ path('app_animaux') }}" class="{% if app.request.attributes.get('_route') == 'app_animaux' %}text-sky-300 text-shadow-md text-shadow-black{% endif %} hover:text-sky-300">Animaux</a>
                         </li>
                         <li>
-                            <a href="{{ path('app_services') }}" class="{% if app.request.attributes.get('_route') == 'app_services' %}text-sky-300{% endif %}">Mes services</a>
+                            <a href="{{ path('app_services') }}" class="{% if app.request.attributes.get('_route') == 'app_services' %}text-sky-300 text-shadow-md text-shadow-black{% endif %} hover:text-sky-300">Services</a>
                         </li>
                         <li>
-                            <a href="{{ path('app_tarifs') }}" class="{% if app.request.attributes.get('_route') == 'app_tarifs' %}text-sky-300{% endif %}">Mes tarifs</a>
+                            <a href="{{ path('app_planning') }}" class="{% if app.request.attributes.get('_route') == 'app_planning' %}text-sky-300 text-shadow-md text-shadow-black{% endif %} hover:text-sky-300">Planning</a>
                         </li>
                         <li>
-                            <a href="{{ path('app_planning') }}" class="{% if app.request.attributes.get('_route') == 'app_planning' %}text-sky-300{% endif %}">Mon planning</a>
+                            <a href="{{ path('app_contact') }}" class="{% if app.request.attributes.get('_route') == 'app_contact' %}text-sky-300 text-shadow-md text-shadow-black{% endif %} hover:text-sky-300">Contact</a>
                         </li>
-                        <li>
-                            <a href="{{ path('app_contact') }}" class="{% if app.request.attributes.get('_route') == 'app_contact' %}text-sky-300{% endif %}">Contact</a>
+                        
+                        <li data-controller="dropdown" class="relative">
+                            {% if app.user %}
+                                <button type="button" data-action="click->dropdown#toggle" class="flex items-center gap-2 cursor-pointer hover:text-sky-300 transition-colors">
+                                    <i class="fa-solid fa-user"></i>
+                                    {{ app.user.firstname ?? 'Compte' }}
+                                    <i data-dropdown-target="arrow" class="fa-solid fa-chevron-down text-sm transition-transform duration-300"></i>
+                                </button>
+                                <div data-dropdown-target="menu" class="absolute right-0 mt-2 w-64 bg-white rounded-b-md border border-gray-200 shadow-lg p-4 z-50 text-sm flex flex-col gap-4 items-start pointer-events-none opacity-0 scale-95 transition-all duration-300 ease-out transform origin-top-right">
+                                    <a href="{{ path('app_account') }}" class="{% if app.request.attributes.get('_route') == 'app_account' %}text-sky-300 text-shadow-md text-shadow-black{% endif %} hover:text-sky-300">Informations personnelles</a>
+                                    {% if 'ROLE_ADMIN' in app.user.roles %}
+                                        <a href="{{ path('app_reservations_admin')}}" class="{% if app.request.attributes.get('_route') == 'app_reservations_admin' %}text-sky-300 text-shadow-md text-shadow-black{% endif %} hover:text-sky-300">Gestion du planning</a>
+                                        <a href="{{ path('app_clients') }}" class="{% if app.request.attributes.get('_route') == 'app_clients' %}text-sky-300 text-shadow-md text-shadow-black{% endif %} hover:text-sky-300">Clients</a>
+                                    {% else %}
+                                        <a href="{{ path('app_reservations')}}" class="{% if app.request.attributes.get('_route') == 'app_reservations' %}text-sky-300 text-shadow-md text-shadow-black{% endif %} hover:text-sky-300">Réservations</a>
+                                    {% endif %}
+                                    <a href="{{ path('app_logout') }}" class="text-red-500 hover:text-red-700 w-full pt-2 border-t border-gray-100">Déconnexion</a>
+                                </div>
+                            {% else %}
+                                <a href="{{ path('app_login') }}" class="{% if app.request.attributes.get('_route') == 'app_login' %}text-sky-300 text-shadow-md text-shadow-black{% endif %} hover:text-sky-300">Connexion</a>
+                            {% endif %}
                         </li>
                     </ul>
-                    <a class="text-4xl text-white text-shadow-md text-shadow-black" href="{{ path('app_home') }}"><img src="{{ asset('images/logo2.jpeg') }}" alt="Logo Oxymaux" class="h-30 w-30 rounded-full"></a>
+                    
+                    <a class="text-4xl text-white text-shadow-md text-shadow-black" href="{{ path('app_home') }}">
+                        <img src="{{ asset('images/logo2.jpeg') }}" alt="Logo Oxymaux" class="h-20 w-20 rounded-full">
+                    </a>
                 </div>
-                <div class="hidden md:hidden" data-navbar-target="mobileMenu">
+                
+                <div class="hidden md:hidden bg-white overflow-hidden transition-all duration-300 ease-in-out" data-navbar-target="mobileMenu">
                     <ul class="flex flex-col items-center text-xl space-y-4 py-4">
                         <li>
-                            <a href="{{ path('app_home') }}" class="{% if app.request.attributes.get('_route') == 'app_home' %}text-sky-300{% endif %}">Accueil</a>
+                            <a href="{{ path('app_home') }}" class="{% if app.request.attributes.get('_route') == 'app_home' %}text-sky-300 text-shadow-md text-shadow-black{% endif %}">Accueil</a>
                         </li>
                         <li>
-                            <a href="{{ path('app_parcours') }}" class="{% if app.request.attributes.get('_route') == 'app_parcours' %}text-sky-300{% endif %}">Mon parcours</a>
+                            <a href="{{ path('app_parcours') }}" class="{% if app.request.attributes.get('_route') == 'app_parcours' %}text-sky-300 text-shadow-md text-shadow-black{% endif %}">Parcours</a>
                         </li>
                         <li>
-                            <a href="{{ path('app_animaux') }}" class="{% if app.request.attributes.get('_route') == 'app_animaux' %}text-sky-300{% endif %}">Mes animaux</a>
+                            <a href="{{ path('app_animaux') }}" class="{% if app.request.attributes.get('_route') == 'app_animaux' %}text-sky-300 text-shadow-md text-shadow-black{% endif %}">Animaux</a>
                         </li>
                         <li>
-                            <a href="{{ path('app_services') }}" class="{% if app.request.attributes.get('_route') == 'app_services' %}text-sky-300{% endif %}">Mes services</a>
+                            <a href="{{ path('app_services') }}" class="{% if app.request.attributes.get('_route') == 'app_services' %}text-sky-300 text-shadow-md text-shadow-black{% endif %}">Services</a>
                         </li>
                         <li>
-                            <a href="{{ path('app_tarifs') }}" class="{% if app.request.attributes.get('_route') == 'app_tarifs' %}text-sky-300{% endif %}">Mes tarifs</a>
+                            <a href="{{ path('app_planning') }}" class="{% if app.request.attributes.get('_route') == 'app_planning' %}text-sky-300 text-shadow-md text-shadow-black{% endif %}">Planning</a>
                         </li>
                         <li>
-                            <a href="{{ path('app_planning') }}" class="{% if app.request.attributes.get('_route') == 'app_planning' %}text-sky-300{% endif %}">Mon planning</a>
+                            <a href="{{ path('app_contact') }}" class="{% if app.request.attributes.get('_route') == 'app_contact' %}text-sky-300 text-shadow-md text-shadow-black{% endif %}">Contact</a>
                         </li>
-                        <li>
-                            <a href="{{ path('app_contact') }}" class="{% if app.request.attributes.get('_route') == 'app_contact' %}text-sky-300{% endif %}">Contact</a>
+                        
+                        <li data-controller="dropdown" class="w-full flex flex-col items-center">
+                            {% if app.user %}
+                                <button type="button" data-action="click->dropdown#toggleAccordion" class="flex items-center gap-2 cursor-pointer py-2">
+                                    <i class="fa-solid fa-user"></i>
+                                    {{ app.user.firstname ?? 'Compte' }}
+                                    <i data-dropdown-target="arrow" class="fa-solid fa-chevron-down text-sm transition-transform duration-300"></i>
+                                </button>
+                                
+                                <div data-dropdown-target="menu" class="w-full flex flex-col items-center gap-3 bg-gray-50 text-base transition-all duration-300 ease-out overflow-hidden" style="height: 0px; opacity: 0;">
+                                    <a href="{{ path('app_account') }}" class="{% if app.request.attributes.get('_route') == 'app_account' %}text-sky-300 text-shadow-md text-shadow-black{% endif %} hover:text-sky-300 pt-3">Informations personnelles</a>
+                                    {% if 'ROLE_ADMIN' in app.user.roles %}
+                                        <a href="{{ path('app_reservations_admin')}}" class="{% if app.request.attributes.get('_route') == 'app_reservations_admin' %}text-sky-300 text-shadow-md text-shadow-black{% endif %} hover:text-sky-300">Gestion du planning</a>
+                                        <a href="{{ path('app_clients') }}" class="{% if app.request.attributes.get('_route') == 'app_clients' %}text-sky-300 text-shadow-md text-shadow-black{% endif %} hover:text-sky-300">Clients</a>
+                                    {% else %}
+                                        <a href="{{ path('app_reservations')}}" class="{% if app.request.attributes.get('_route') == 'app_reservations' %}text-sky-300 text-shadow-md text-shadow-black{% endif %} hover:text-sky-300">Réservations</a>
+                                    {% endif %}
+                                    <a href="{{ path('app_logout') }}" class="text-red-500 pb-3">Déconnexion</a>
+                                </div>
+                            {% else %}
+                                <a href="{{ path('app_login') }}" class="{% if app.request.attributes.get('_route') == 'app_login' %}text-sky-300 text-shadow-md text-shadow-black{% endif %} hover:text-sky-300 py-2">Connexion</a>
+                            {% endif %}
                         </li>
                     </ul>
                 </div>
             </nav>
         </header>
         <main class="mt-20 flex-1">
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="max-w-2xl mx-auto mt-20 px-4 py-2 rounded {{ label == 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }} shadow">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endfor %}
         {% block body %}{% endblock %}
         </main>
-        <footer class="mt-10 z-50">
-            <div class="text-lg text-center py-4">
-                &copy; {{ "now"|date("Y") }} Oxymaux. Tous droits réservés.
+        <footer class="mt-10 z-50 px-4 py-4 border-t border-sky-300 bg-white">
+            <div class="max-w-4xl mx-auto font-semibold flex flex-col md:flex-row justify-between items-center gap-2 w-full mb-4">
+                <div class="flex justify-center space-x-4">
+                    <a href="https://www.facebook.com/p/Oxymaux-100080042719436/" target="_blank" aria-label="Facebook" class="hover:text-blue-700"><i class="fa-brands fa-facebook fa-xl"></i></a>
+                    <a href="https://www.instagram.com/oxymaux_17/" target="_blank" aria-label="Instagram" class="hover:text-pink-500"><i class="fa-brands fa-instagram fa-xl"></i></a>
+                </div>
+                <div class="text-center py-4">
+                    &copy; {{ "now"|date("Y") }} Oxymaux. Tous droits réservés.
+                </div>
+                    <div class="flex flex-col items-center gap-2">
+                        <a href="{{ path('app_mentions_legales') }}" class="text-sm hover:text-blue-700">Mentions légales</a>
+                        <a href="{{ path('app_politique_confidentialite') }}" class="text-sm hover:text-blue-700">Politique de confidentialité</a>
+                        <a href="{{ path('app_cookies') }}" class="text-sm hover:text-blue-700">Politique de cookies</a>
+                    </div>
+                </div>
             </div>
         </footer>
     </body>

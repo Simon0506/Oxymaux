@@ -5,6 +5,32 @@
 {% block body %}
 
 <section class=" mx-auto mt-10 px-4">
-    <h1 class="text-4xl text-center mt-20">Mes animaux</h1>
+    <h1 class="text-4xl text-center mt-20 font-semibold">Mes animaux</h1>
+    <div class="w-full flex justify-end items-center gap-6 mx-auto max-w-7xl">
+        {% if app.user and 'ROLE_ADMIN' in app.user.roles %}
+        <a href="{{ path('app_animaux_new') }}" class="px-4 py-2 bg-[#7a96a1] text-white rounded hover:bg-[#5a6b7a] transition">Ajouter un animal <i class="fa-solid fa-plus"></i></a>
+        {% endif %}
+    </div>
+    <div class="max-w-7xl mx-auto mt-10">
+        {% for category in categories %}
+            {% if category != categories|first %}
+            <span class="block w-1/2 h-px bg-sky-300 mx-auto my-10 rounded-full"></span>
+            {% endif %}
+            <h2 class="text-2xl font-semibold mt-10 underline underline-offset-4">{{ category.name }}</h2>
+            <div class="flex flex-wrap gap-6 mt-4">
+                {% for animal in category.animals %}
+                    <div class="bg-white rounded shadow-lg shadow-[#7a96a1] p-4 relative">
+                        {% if app.user and 'ROLE_ADMIN' in app.user.roles %}
+                            <a href="{{ path('app_animaux_edit', {'id': animal.id}) }}" class="absolute z-10 -right-1 -top-1 bg-[#7a96a1] text-white p-2 rounded shadow-md"><i class="fa-solid fa-pen"></i></a>
+                        {% endif %}
+                        <h3 class="text-xl font-semibold">{{ animal.name }}</h3>
+                        {% if animal.image %}
+                            <img src="{{ asset('images/' ~ animal.image) }}" alt="{{ animal.name }}" class="mt-4 rounded max-w-xs max-h-48 object-cover">
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
 </section>
 {% endblock %}

@@ -1,0 +1,4 @@
+# config/packages/test/web_profiler.yaml
+framework:
+    profiler:
+        collect: true

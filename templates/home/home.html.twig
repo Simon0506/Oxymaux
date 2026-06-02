@@ -1,0 +1,138 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Oxymaux Médiation Animale{% endblock %}
+
+{% block body %}
+<section class=" mx-auto mt-10 px-4">
+    <div class="flex flex-col md:flex-row justify-center items-center gap-10 w-full mt-10">
+        <div class="flex flex-col items-center">
+            <h1 class="text-5xl text-center font-bold">
+                <p>Bienvenue chez</p>
+                <p class="mt-2"><span class="text-sky-300 text-shadow-md text-shadow-black">OXY</span>MAUX</p>
+            </h1>
+            <p class="text-2xl text-sky-300 text-shadow-md text-shadow-black text-center mt-10">
+                Un souffle d'oxygène grâce aux animaux !
+            </p>
+            <div class="w-full max-w-2xl mt-10">
+                <div class="bg-orange-100 bg-opacity-80 rounded-lg shadow-lg flex flex-col md:flex-row justify-center items-center gap-4 mb-10 p-4">
+                    <img src="{{ asset('images/logo2.jpeg') }}" alt="A propos de moi" class="w-40 h-40 object-cover rounded-full shadow-lg">
+                    <div class="p-6 flex flex-col items-center">
+                        <p class="text-center max-w-3xl mx-auto md:ml-6">
+                            Je suis Noémie, passionnée par les animaux et leur bien-être. J'ai créé Oxymaux pour offrir des services personnalisés, destinés à améliorer l'estime de soi et le bien-être des individus grâce aux animaux.
+                        </p>
+                        <a href="{{ path('app_parcours') }}" class="mt-4 inline-block mx-auto text-center text-lg text-shadow-md text-shadow-black px-4 py-2 bg-[#7a96a1] text-white rounded-full shadow-md hover:bg-[#6b8490] transition duration-300">Découvrir mon parcours <i class="fa-solid fa-paw"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="flex flex-col justify-center items-center md:ml-40">
+            <img src="{{ asset('images/noemie_et_plume.jpg') }}" alt="Image d'accueil" class="w-full max-w-4xl max-h-96 object-cover rounded-lg shadow-lg">
+            <p class="text-center text-sm text-gray-600">Noémie et Plume, une complicité qui inspire - &copy; AliZ Photography</p>
+        </div>
+    </div>
+    <div class="flex flex-col justify-center gap-5 w-full mt-10 max-w-7xl mx-auto px-4">
+        <h2 class="text-3xl font-semibold">Mes services</h2>
+        <div class="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-5 w-full">
+            {% for service in services %}
+            <div class="bg-sky-100 rounded-lg shadow-lg p-6 flex flex-col items-center">
+                <h3 class="text-xl mb-4 font-semibold flex justify-start items-center gap-2 w-full">
+                    {% if service.logo %}
+                        <img src="{{ asset('images/' ~ service.logo) }}" alt="{{ service.name }}" class="w-8 h-8 object-cover">
+                    {% endif %}
+                    <p class="underline underline-offset-4 text-center w-full">{{ service.name }}</p>
+                </h3>
+                <p class="text-center">{{ service.resume|raw }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="flex justify-center">
+            <a href="{{ path('app_services') }}" class="inline-block mx-auto text-center text-lg text-shadow-md text-shadow-black px-4 py-2 bg-[#7a96a1] text-white rounded-full shadow-md hover:bg-[#6b8490] transition duration-300">En savoir plus <i class="fa-solid fa-paw"></i></a>
+        </div>
+    </div>
+
+    {# Les avis #}
+    {% if reviews|length > 0 %}
+    <div class="max-w-7xl mx-auto mt-10 px-4">
+        <div class="w-1/2 mx-auto h-px bg-sky-300 mb-6"></div>
+        <h2 class="max-w-7xl mx-auto text-3xl font-semibold mb-6 flex gap-10">
+            <span>Ils parlent de nous sur Google ...</span>
+            {% if app.user and 'ROLE_ADMIN' in app.user.roles %}
+            <div class="flex items-center gap-2 p-3 rounded-full bg-[#7a96a1] hover:bg-[#6b8490] transition duration-300 cursor-pointer">
+                <a href="{{ path('app_google_sync_reviews') }}" class="text-sm font-normal text-white text-shadow-md text-shadow-black" title="Synchroniser les avis Google"><i class="fa-solid fa-arrows-rotate"></i> Nouvelle synchronisation</a>
+            </div>
+            {% endif %}
+        </h2>
+        <div class="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] items-center gap-4">
+            {% for review in reviews %}
+                <div data-controller="review" class="bg-white shadow-sm shadow-sky-300 rounded-lg p-4 w-full max-w-sm h-full">
+                    {% for i in 1..5 %}
+                        {% if i <= review.rating %}
+                            <i class="fa-solid fa-star text-yellow-500 text-xs"></i>
+                        {% else %}
+                            <i class="fa-regular fa-star text-yellow-500 text-xs"></i>
+                        {% endif %}
+                    {% endfor %}
+                    <p data-review-target="comment" class="text-justify text-xs mt-2">{{ review.comment }}</p>
+                    <span data-review-target="toggle" data-action="click->review#toggle" class="hidden text-xs text-gray-500 hover:text-blue-500 cursor-pointer">Voir plus...</span>
+                    <div class="flex justify-between items-center mt-4 text-xs">
+                        <div class="flex items-center">
+                            {% if review.profilePhotoUrl %}
+                                <img src="{{ review.profilePhotoUrl }}" alt="{{ review.authorName }}" class="w-6 h-6 rounded-full object-cover mr-2">
+                            {% else %}
+                                <div class="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center mr-2">
+                                    <i class="fa-solid fa-user text-gray-500 text-xs"></i>
+                                </div>
+                            {% endif %}
+                            <span class="font-semibold mt-2">{{ review.authorName }}</span>
+                        </div>
+                        <p class="text-gray-500 mt-2">{{ review.relativeTimeDescription }}</p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="flex justify-center mt-6">
+            <a href="https://www.google.com/search?sa=X&sca_esv=b15e692cad2bee86&hl=fr-FR&sxsrf=ANbL-n4zTjUnTZod4DRRP6dBXi2kMvViWA:1778849996342&q=Oxymaux+:+m%C3%A9diation+animal,+comportementaliste+et+%C3%A9ducatrice+canine+Avis&rflfq=1&num=20&stick=H4sIAAAAAAAAAONgkxIyNrQ0Njc2MjA1sjQ1MTUwMzfcwMj4itHLv6IyN7G0QsFKIffwypTMxJLM_DyFxLzM3MQcHYXk_NyC_KKS1NzUvJLEnMziklSF1BIFoLrS5MSSoszkVIVkoNK8VAXHssziRaxUNAwA11dNErMAAAA&rldimm=319373205295450671&tbm=lcl&ved=2ahUKEwjh24_RrLuUAxWjUaQEHdbvBbcQ9fQKegQIUBAG&biw=1920&bih=911&dpr=1#lkt=LocalPoiReviews" target="_blank" class="inline-block mx-auto text-center text-lg text-shadow-md text-shadow-black px-4 py-2 bg-[#7a96a1] text-white rounded-full shadow-md hover:bg-[#6b8490] transition duration-300">Voir tous les avis <i class="fa-solid fa-paw"></i></a>
+        </div>
+    </div>
+    {% endif %}
+
+    {# Les partenaires #}
+    <div class="max-w-7xl mx-auto mt-10 px-4 w-full">
+        {% if partners|length > 0 or (app.user and 'ROLE_ADMIN' in app.user.roles) %}
+        <div class="w-1/2 mx-auto h-px bg-sky-300 mb-6"></div>
+        <h2 class="max-w-7xl mx-auto text-3xl font-semibold mb-6">Oxymaux, c'est aussi une collaboration pluridisciplinaire ...</h2>
+        {% endif %}
+        {% if app.user and 'ROLE_ADMIN' in app.user.roles %}
+            <div class="flex justify-start mb-4">
+                <a href="{{ path('app_partners_new') }}" class="px-4 py-2 bg-[#7a96a1] text-white text-shadow-md text-shadow-black rounded hover:bg-[#6b8490] transition">Ajouter un partenaire <i class="fa-solid fa-plus"></i></a>
+            </div>
+        {% endif %}
+        <div class="grid grid-cols-[repeat(auto-fit,300px)] justify-center gap-4 w-full">
+            {% for partner in partners %}
+                <div class="grid {% if partner.description %}grid-cols-2{% else %}grid-cols-1{% endif %} items-center gap-1 max-w-xs w-full bg-white shadow-sm shadow-sky-300 rounded-lg shadow-lg p-2 relative">
+                    {% if app.user and 'ROLE_ADMIN' in app.user.roles %}
+                        <a href="{{ path('app_partners_edit', {'id': partner.id}) }}" class="absolute z-10 -right-1 -top-1 bg-[#7a96a1] text-white p-2 rounded shadow-md"><i class="fa-solid fa-pen"></i></a>
+                    {% endif %}
+                    <div class="flex flex-col items-center gap-2">
+                        <p class="text-center font-semibold text-sm">{{ partner.name }}</p>
+                        {% if partner.logo %}
+                        <img src="{{ asset('images/' ~ partner.logo) }}" alt="{{ partner.name }}" class="w-20 h-20 object-cover rounded-lg shadow-lg">
+                        {% endif %}
+                        <p class="text-center text-sm">{{ partner.job }}</p>
+                    </div>
+                    <p class="text-center text-sm text-gray-600">{{ partner.description }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="mt-20 px-4">
+        <div class="w-1/2 mx-auto h-px bg-sky-300 mb-6"></div>
+        <h2 class="text-3xl font-semibold text-center mb-10">Besoin d'une prestation ou d'un devis ?</h2>
+        <div class="flex flex-col md:flex-row justify-center items-center gap-4 max-w-2xl mx-auto w-fit md:w-full">
+            <a href="{{ path('app_planning') }}" class="text-center text-lg text-shadow-md text-shadow-black px-4 py-2 bg-[#7a96a1] text-white rounded-full shadow-md hover:bg-[#6b8490] transition duration-300 w-full md:w-auto">Voir mon planning <i class="fa-solid fa-paw"></i></a>
+            <a href="{{ path('app_contact') }}" class="text-center font-semibold px-4 py-2 bg-sky-300 text-lg rounded-full shadow-md shadow-gray-400 hover:bg-sky-400 transition duration-300 w-full md:w-auto">Me contacter <i class="fa-solid fa-envelope"></i></a>
+        </div>
+    </div>
+</section>
+{% endblock %}

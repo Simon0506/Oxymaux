@@ -1,0 +1,74 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Oxymaux - Clients{% endblock %}
+
+{% block body %}
+    <section class="mt-10" data-controller="search-list">
+        <div class="w-full flex flex-col items-center gap-6 mx-auto max-w-3xl">
+            <h1 class="text-3xl font-bold">Liste des clients</h1>
+            
+            <div class="w-full relative">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </span>
+                <input 
+                    type="text" 
+                    data-action="input->search-list#filter" 
+                    placeholder="Rechercher un nom, un prénom ou un chien..." 
+                    class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-transparent font-normal text-gray-700"
+                >
+            </div>
+
+            <table class="w-full bg-white rounded shadow-lg overflow-hidden">
+                <thead class="bg-sky-400">
+                    <tr>
+                        <th class="py-2 px-4 text-left">Nom</th>
+                        <th class="py-2 px-4 text-left">Prénom</th>
+                        <th class="py-2 px-4 text-left">Email</th>
+                        <th class="py-2 px-4 text-left">Chien(s)</th>
+                        <th class="py-2 px-4 text-left">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for client in clients %}
+                        {% set dogNames = [] %}
+                        {% for dog in client.dogs %}
+                            {% set dogNames = dogNames|merge([dog.fullName]) %}
+                        {% endfor %}
+                        
+                        <tr 
+                            data-search-list-target="row" 
+                            data-search="{{ client.lastname|lower }} {{ client.firstname|lower }} {{ dogNames|join(' ')|lower }}"
+                            class="{% if loop.index0 is even %}bg-sky-100{% else %}bg-white{% endif %} border-b border-gray-100 transition-colors duration-150"
+                        >
+                            <td class="py-2 px-4 font-semibold text-gray-800">{{ client.lastname }}</td>
+                            <td class="py-2 px-4 text-gray-700">{{ client.firstname }}</td>
+                            <td class="py-2 px-4 text-gray-600 text-sm">{{ client.email }}</td>
+                            <td class="py-2 px-4 flex flex-col gap-1">
+                                {% if client.dogs|length > 0 %}
+                                    {% for dog in client.dogs %}
+                                        <span class="text-sm bg-sky-50 text-sky-700 px-2 py-0.5 rounded-full w-fit">{{ dog.fullName }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="text-sm text-gray-400 italic px-2 py-0.5">Aucun chien renseigné</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-2 px-4 text-center">
+                                <a href="{{ path('admin_client_show', {'id': client.id}) }}" class="text-gray-500 hover:text-black transition-colors duration-300" title="Voir la fiche de {{ client.firstname }} {{ client.lastname }}">
+                                    <i class="fa-solid fa-eye"></i>
+                                </a>
+                                <a href="{{ path('admin_client_reservations', {'id': client.id}) }}" class="ml-4 text-gray-500 hover:text-black transition-colors duration-300" title="Voir les réservations de {{ client.firstname }} {{ client.lastname }}">
+                                    <i class="fa-solid fa-calendar-days"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="py-8 text-center text-gray-500 italic">Aucun client trouvé</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+{% endblock %}

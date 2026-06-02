@@ -1,0 +1,283 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Oxymaux - Réservations{% endblock %}
+
+{% block body %}
+<section class="mx-auto mt-10 px-4">
+    <h1 class="text-4xl text-center mt-20 font-semibold">Gestion des réservations</h1>
+    {% if activitiesNeedingSync|length > 0 %}
+        <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-10 max-w-2xl mx-auto rounded text-center">
+            <p class="font-bold">Attention : {{ activitiesNeedingSync|length }} activité(s) nécessitent une synchronisation avec Google Agenda.</p>
+            <form method="post" action="{{ path('app_google_sync_update') }}" class="mt-4">
+                <button type="submit" class="px-4 py-2 bg-sky-300 rounded hover:bg-sky-500 transition text-black cursor-pointer">Synchroniser Google Agenda</button>
+            </form>
+        </div>
+    {% endif %}
+    <div data-controller="reservations-admin" class="grid grid-cols-1 md:grid-cols-2 gap-10 mt-10 p-6 mx-auto">
+
+    {# Affichage des activités et des réservations #}
+        <div>
+            <h2 class="text-xl font-semibold text-center">
+                {% if not date or date|date('Y-m-d') == 'now'|date('Y-m-d') %}
+                    Liste des inscrits pour aujourd'hui
+                {% else %}
+                    Liste des inscrits pour le {{ date|date('d/m/Y') }}
+                {% endif %}
+            </h2>
+            <form data-controller="date-filter" data-action="change->date-filter#submit" method="get" action="{{ path('app_reservations_admin') }}" class="mb-6">
+                <div class="flex justify-center items-center gap-4 mt-2">
+                    <label for="date" class="text-sm text-gray-700">Changer de date :</label>
+                    <input data-reservations-admin-target="date" type="date" id="date" name="date" value="{{ date|date('Y-m-d') }}" class="border border-gray-300 rounded px-2 py-1 text-sm">
+                    {% if date and date|date('Y-m-d') != 'now'|date('Y-m-d') %}
+                        <a href="{{ path('app_reservations_admin') }}" class="text-sky-500 hover:text-sky-700 text-sm">Aujourd'hui</a>
+                    {% endif %}
+                </div>
+            </form>
+            <div class="w-full flex flex-col items-center gap-6 mx-auto max-w-2xl mt-5">
+                {% if activities|length > 0 %}
+                    {% for activity in activities %}
+                        {% if not activity.canceled %}
+                            <div class="w-full bg-sky-100 p-4 rounded-lg shadow-lg relative">
+
+                                {# Boutons de gestion de l'activité#}
+                                <div class="absolute -right-1 -top-1 flex gap-1 tet-xs">
+                                    <a href="{{ path('app_activity_edit', {'id': activity.id}) }}" class="bg-[#7a96a1] text-white text-shadow-md text-shadow-black p-2 rounded shadow-md" title="Modifier l'activité"><i class="fa-solid fa-pen-to-square"></i></a>
+                                    <div data-controller="confirm">
+                                        <button data-action="click->confirm#openModal" class="bg-white text-red-500 border border-red-500 p-2 rounded shadow-md cursor-pointer" title="Annuler l'activité">
+                                            <i class="fa-solid fa-xmark"></i>
+                                        </button>
+                                        <div class="hidden fixed inset-0 flex items-center justify-center z-20" data-confirm-target="modal">
+                                            <form class="bg-white p-6 rounded-lg shadow-lg shadow-sky-500" method="post" action="{{ path('app_activity_cancel', {'id': activity.id}) }}">
+                                                <p class="mb-4">Êtes-vous sûr de vouloir annuler cette activité ?</p>
+                                                <label for="reason" class="block text-sm font-medium text-gray-700 mb-2">Raison de l'annulation (optionnel) :</label>
+                                                <textarea id="reason" name="reason" rows="3" class="w-full border border-gray-300 rounded px-2 py-1 text-sm mb-4" placeholder="Ex : L'activité a été annulée pour cause de mauvais temps..."></textarea>
+                                                <div class="flex justify-center gap-4">
+                                                    <button type="button" data-action="click->confirm#cancel" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition cursor-pointer">Non, conserver</button>
+                                                    <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition cursor-pointer">Oui, annuler</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                    <div data-controller="confirm">
+                                        <button data-action="click->confirm#openModal" class="bg-red-500 text-white p-2 rounded shadow-md cursor-pointer" title="Supprimer l'activité">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                        <div class="hidden fixed inset-0 flex items-center justify-center z-20" data-confirm-target="modal">
+                                            <form class="bg-white p-6 rounded-lg shadow-lg shadow-sky-500" method="post" action="{{ path('app_activity_delete', {'id': activity.id}) }}">
+                                                <p class="mb-4">Êtes-vous sûr de vouloir supprimer cette activité ?</p>
+                                                <label for="reason" class="block text-sm font-medium text-gray-700 mb-2">Raison de la suppression (optionnel) :</label>
+                                                <textarea id="reason" name="reason" rows="3" class="w-full border border-gray-300 rounded px-2 py-1 text-sm mb-4" placeholder="Ex : L'activité a été supprimée pour cause d'erreur de planning..."></textarea>
+                                                <div class="flex justify-center gap-4">
+                                                    <button type="button" data-action="click->confirm#cancel" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition cursor-pointer">Non, conserver</button>
+                                                    <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition cursor-pointer">Oui, supprimer</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {# Détails de l'activité #}
+                                <h3 class="text-lg font-semibold">
+                                    {{ activity.service.name }}
+                                    {% if activity.start and activity.end %}
+                                        - de {{ activity.start|date('H:i') }} à {{ activity.end|date('H:i') }}
+                                    {% elseif activity.start %}
+                                        - à partir de {{ activity.start|date('H:i') }}
+                                    {% endif %}
+                                </h3>
+                                {% if activity.openToAll %}
+                                    <p class="text-blue-500 text-sm mb-4">Ouvert à tous</p>
+                                {% elseif activity.nbPlaces > 0 %}
+                                    <p class="text-blue-500 text-sm mb-4">{{ activity.nbPlaces }} place(s) maximum</p>
+                                {% endif %}
+                                {% set reservationsValides = activity.reservations|filter(reservation => reservation.status == 'validée') %}
+                                {% set reservationsAnnulees = activity.reservations|filter(reservation => reservation.status == 'annulée') %}
+                                {% if reservationsValides|length > 0 or reservationsAnnulees|length > 0 %}
+                                    <ul class="text-sm space-y-2">
+                                        {% for reservation in reservationsValides %}
+                                            <div data-controller="confirm" class="flex items-center gap-2">
+                                                <button data-action="click->confirm#openModal" class="text-red-500 hover:underline cursor-pointer">
+                                                    <i class="fa-solid fa-trash" title="Annuler l'inscription"></i>
+                                                </button>
+                                                <li class="list-disc list-inside ml-2">
+                                                    {% if reservation.dog %}
+                                                        {{ reservation.dog.fullName }} - Propriétaire : {{ reservation.dog.user.firstName }} {{ reservation.dog.user.lastName }}
+                                                    {% else %}
+                                                        {{ reservation.name }}
+                                                    {% endif %}
+                                                </li>
+                                                <div class="hidden fixed inset-0 flex items-center justify-center z-50" data-confirm-target="modal">
+                                                    <form class="bg-white p-6 rounded-lg shadow-lg shadow-sky-500" method="post" action="{{ path('app_reservation_cancel', {'id': reservation.id}) }}">
+                                                        <p class="mb-4">Êtes-vous sûr de vouloir annuler cette inscription ?</p>
+                                                        <p class="mb-4 text-center">
+                                                            <strong>
+                                                                {% if reservation.dog %}
+                                                                    {{ reservation.dog.fullName }} - Propriétaire : {{ reservation.dog.user.firstName }} {{ reservation.dog.user.lastName }}
+                                                                {% else %}
+                                                                    {{ reservation.name }}
+                                                                {% endif %}
+                                                            </strong>
+                                                        </p>
+                                                        <label for="reason" class="block text-sm font-medium text-gray-700 mb-2">Raison de l'annulation (optionnel) :</label>
+                                                        <textarea id="reason" name="reason" rows="3" class="w-full border border-gray-300 rounded px-2 py-1 text-sm mb-4" placeholder="Ex : Le client a eu un empêchement..."></textarea>
+                                                        <div class="flex justify-center gap-4">
+                                                            <button type="button" data-action="click->confirm#cancel" class="px-4 py-2 bg-gray-300 rounded-lg cursor-pointer">Non, conserver</button>
+                                                            <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded-lg cursor-pointer">Oui, annuler</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                        {% for reservation in reservationsAnnulees %}
+                                            <li class="list-disc list-inside ml-2">
+                                                <span class="text-gray-500">
+                                                    {% if reservation.dog %}
+                                                        {{ reservation.dog.fullName }} - Propriétaire : {{ reservation.dog.user.firstName }} {{ reservation.dog.user.lastName }}
+                                                    {% else %}
+                                                        {{ reservation.name }}
+                                                    {% endif %}
+                                                </span>
+                                                <span class="text-red-500"> (Annulé)</span>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% elseif activity.openToAll or activity.nbPlaces > 0 %}
+                                    <p class="text-gray-700">Aucun participant inscrit pour cette activité.</p>
+                                {% endif %}
+                                {% if activity.openToAll or (activity.nbPlaces > 0 and activity.nbPlaces > activity.reservations|length) %}
+                                    <a href="{{ path('app_activity_register_admin', {'id': activity.id}) }}" class="mt-4 inline-block px-2 py-1 bg-[#7a96a1] text-white text-sm text-shadow-md text-shadow-black rounded hover:bg-[#6b8490] transition">Inscrire un participant <i class="fa-solid fa-plus"></i></a>
+                                {% elseif activity.nbPlaces == 0 and activity.comment %}
+                                    <p>{{ activity.comment }}</p>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <div class="w-full bg-red-100 p-4 rounded-lg shadow-lg">
+                                <h3 class="text-lg font-semibold text-red-500">
+                                    {{ activity.service.name }}
+                                    {% if activity.start and activity.end %}
+                                        - de {{ activity.start|date('H:i') }} à {{ activity.end|date('H:i') }}
+                                    {% elseif activity.start %}
+                                        - à partir de {{ activity.start|date('H:i') }}
+                                    {% endif %}
+                                    (Annulée)
+                                </h3>
+                                {% if activity.reasonCancel %}
+                                    <p class="mt-2 font-semibold text-sm">Raison de l'annulation :</p>
+                                    <p class="mt-1 text-gray-700">{{ activity.reasonCancel }}</p>
+                                {% endif %}
+                                <div data-controller="participants" class="mt-4">
+                                    {% set validReservations = activity.reservations|filter(reservation => reservation.status == 'validée') %}
+                                    <h4 class="font-semibold mb-2 text-sm">
+                                        Participants inscrits : 
+                                        {% if validReservations|length > 0 %}
+                                            <i class="fa-solid fa-chevron-down" data-action="click->participants#toggle" data-participants-target="header" style="cursor: pointer;"></i>
+                                        {% endif %}</h4>
+                                    {% if validReservations|length > 0 %}
+                                        <ul data-participants-target="list" class="hidden text-sm space-y-1">
+                                            {% for reservation in validReservations %}
+                                                <li class="list-disc list-inside">
+                                                    {% if reservation.dog %}
+                                                        {{ reservation.dog.fullName }} - Propriétaire : {{ reservation.dog.user.firstName }} {{ reservation.dog.user.lastName }}
+                                                    {% else %}
+                                                        {{ reservation.name }}
+                                                    {% endif %}
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% else %}
+                                        <p class="text-sm text-gray-700">Aucun participant inscrit.</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <p class="text-center text-gray-700">Aucune activité n'est prévue pour cette date.</p>
+                {% endif %}
+            </div>
+            <div class="flex justify-center mt-6">
+                <a href="{{ path('app_add_activity', {'date': date|date('Y-m-d')}) }}" class="px-4 py-2 bg-[#7a96a1] text-white text-shadow-md text-shadow-black rounded hover:bg-[#6b8490] transition">Ajouter une activité pour cette date <i class="fa-solid fa-plus"></i></a>
+            </div>
+        </div>
+
+        {# Affichage des réservations en attente #}
+        <div class="max-w-2xl mx-auto">
+            <h2 class="text-xl font-semibold text-center">Réservations en attente</h2>
+            <div class="w-full flex flex-col items-center gap-6 mt-5">
+                {% if reservations|length > 0 %}
+                    <table class="w-full bg-sky-100 rounded-lg shadow-lg overflow-hidden">
+                        <thead class="bg-sky-300">
+                            <tr>
+                                <th class="text-left px-4 py-2">Chien</th>
+                                <th class="text-left px-4 py-2">Activité</th>
+                                <th class="text-left px-4 py-2">Date de l'activité</th>
+                                <th class="text-left px-4 py-2">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reservation in reservations %}
+                                <tr class="text-sm">
+                                    <td class="px-4 py-2 border-t">
+                                        {% if reservation.dog %}
+                                            {{ reservation.dog.fullName }} - Propriétaire : {{ reservation.dog.user.firstName }} {{ reservation.dog.user.lastName }}
+                                        {% else %}
+                                            {{ reservation.name }}
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-4 py-2 border-t">{{ reservation.activity.service.name }}</td>
+                                    <td class="px-4 py-2 border-t">{{ reservation.activity.date|date('d/m/Y') }}  <button data-action="click->reservations-admin#viewDay" data-reservations-admin-value="{{ reservation.activity.date|date('Y-m-d') }}" class="text-gray-500 hover:text-black cursor-pointer"><i class="fas fa-eye" title="Voir la journée"></i></button></td>
+                                    <td class="px-4 py-2 border-t">
+                                        <div class="text-sm flex items-center gap-1">
+                                            <div data-controller="confirm">
+                                                <button data-action="click->confirm#openModal" class="bg-sky-300 px-2 py-1 rounded hover:bg-sky-400 transition cursor-pointer">Valider</button>
+                                                <div class="hidden fixed inset-0 flex items-center justify-center z-50" data-confirm-target="modal">
+                                                    <div class="bg-white p-6 rounded-lg shadow-lg shadow-sky-500">
+                                                        <p class="mb-4">Êtes-vous sûr de vouloir valider cette inscription ?</p>
+                                                        <p class="mb-4 text-center">
+                                                            <strong>
+                                                            {% if reservation.dog %}
+                                                                {{ reservation.dog.fullName }} - propriétaire : {{ reservation.dog.user.firstName }} {{ reservation.dog.user.lastName }}
+                                                            {% else %}
+                                                                {{ reservation.name }}
+                                                            {% endif %}
+                                                            </strong>
+                                                        </p>
+                                                        <div class="flex justify-center gap-4">
+                                                            <a href="{{ path('app_reservation_validate', {'id': reservation.id}) }}" class="px-4 py-2 bg-sky-300 rounded hover:bg-sky-400 transition">Oui, valider</a>
+                                                            <button data-action="click->confirm#cancel" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition cursor-pointer">Non, annuler</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div data-controller="confirm">
+                                                <button data-action="click->confirm#openModal" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 transition ml-2 cursor-pointer">Refuser</button>
+                                                <div class="hidden fixed inset-0 flex items-center justify-center z-50" data-confirm-target="modal">
+                                                    <form class="bg-white p-6 rounded-lg shadow-lg shadow-sky-500" method="post" action="{{ path('app_reservation_reject', {'id': reservation.id}) }}">
+                                                        <p class="mb-4">Êtes-vous sûr de vouloir refuser cette inscription ?</p>
+                                                        <p class="mb-4 text-center"><strong>
+                                                            {% if reservation.dog %}
+                                                                {{ reservation.dog.fullName }} - propriétaire : {{ reservation.dog.user.firstName }} {{ reservation.dog.user.lastName }}
+                                                            {% else %}
+                                                                {{ reservation.name }}
+                                                            {% endif %}
+                                                            </strong></p>
+                                                    <div class="flex justify-center gap-4">
+                                                        <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition">Oui, refuser</button>
+                                                        <button data-action="click->confirm#cancel" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition cursor-pointer">Non, annuler</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="text-center text-gray-700">Aucune réservation n'a été effectuée pour le moment.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

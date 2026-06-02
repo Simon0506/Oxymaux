@@ -1002,7 +1002,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         enabled?: bool|Param, // Default: false
  *     },
  *     intl?: bool|array{
- *         enabled?: bool|Param, // Default: false
+ *         enabled?: bool|Param, // Default: true
  *     },
  *     cssinliner?: bool|array{
  *         enabled?: bool|Param, // Default: false
@@ -1011,7 +1011,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         enabled?: bool|Param, // Default: false
  *     },
  *     string?: bool|array{
- *         enabled?: bool|Param, // Default: false
+ *         enabled?: bool|Param, // Default: true
  *     },
  *     commonmark?: array{
  *         renderer?: array{ // Array of options for rendering HTML.
@@ -1521,6 +1521,30 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     script_attributes?: array<string, scalar|Param|null>,
  *     link_attributes?: array<string, scalar|Param|null>,
  * }
+ * @psalm-type SymfonycastsVerifyEmailConfig = array{
+ *     lifetime?: int|Param, // The length of time in seconds that a signed URI is valid for after it is created. // Default: 3600
+ * }
+ * @psalm-type KnpuOauth2ClientConfig = array{
+ *     http_client?: scalar|Param|null, // Service id of HTTP client to use (must implement GuzzleHttp\ClientInterface) // Default: null
+ *     http_client_options?: array{
+ *         timeout?: int|Param,
+ *         proxy?: scalar|Param|null,
+ *         verify?: bool|Param, // Use only with proxy option set
+ *     },
+ *     clients?: array<string, array<string, mixed>>,
+ * }
+ * @psalm-type SymfonycastsResetPasswordConfig = array{
+ *     request_password_repository?: scalar|Param|null, // A class that implements ResetPasswordRequestRepositoryInterface - usually your ResetPasswordRequestRepository.
+ *     lifetime?: int|Param, // The length of time in seconds that a password reset request is valid for after it is created. // Default: 3600
+ *     throttle_limit?: int|Param, // Another password reset cannot be made faster than this throttle time in seconds. // Default: 3600
+ *     enable_garbage_collection?: bool|Param, // Enable/Disable automatic garbage collection. // Default: true
+ * }
+ * @psalm-type DamaDoctrineTestConfig = array{
+ *     enable_static_connection?: mixed, // Default: true
+ *     enable_static_meta_data_cache?: bool|Param, // Default: true
+ *     enable_static_query_cache?: bool|Param, // Default: true
+ *     connection_keys?: list<mixed>,
+ * }
  * @psalm-type ConfigType = array{
  *     imports?: ImportsConfig,
  *     parameters?: ParametersConfig,
@@ -1535,6 +1559,9 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     stimulus?: StimulusConfig,
  *     turbo?: TurboConfig,
  *     webpack_encore?: WebpackEncoreConfig,
+ *     symfonycasts_verify_email?: SymfonycastsVerifyEmailConfig,
+ *     knpu_oauth2_client?: KnpuOauth2ClientConfig,
+ *     symfonycasts_reset_password?: SymfonycastsResetPasswordConfig,
  *     "when@dev"?: array{
  *         imports?: ImportsConfig,
  *         parameters?: ParametersConfig,
@@ -1552,6 +1579,9 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         stimulus?: StimulusConfig,
  *         turbo?: TurboConfig,
  *         webpack_encore?: WebpackEncoreConfig,
+ *         symfonycasts_verify_email?: SymfonycastsVerifyEmailConfig,
+ *         knpu_oauth2_client?: KnpuOauth2ClientConfig,
+ *         symfonycasts_reset_password?: SymfonycastsResetPasswordConfig,
  *     },
  *     "when@prod"?: array{
  *         imports?: ImportsConfig,
@@ -1567,6 +1597,9 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         stimulus?: StimulusConfig,
  *         turbo?: TurboConfig,
  *         webpack_encore?: WebpackEncoreConfig,
+ *         symfonycasts_verify_email?: SymfonycastsVerifyEmailConfig,
+ *         knpu_oauth2_client?: KnpuOauth2ClientConfig,
+ *         symfonycasts_reset_password?: SymfonycastsResetPasswordConfig,
  *     },
  *     "when@test"?: array{
  *         imports?: ImportsConfig,
@@ -1583,6 +1616,10 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         stimulus?: StimulusConfig,
  *         turbo?: TurboConfig,
  *         webpack_encore?: WebpackEncoreConfig,
+ *         symfonycasts_verify_email?: SymfonycastsVerifyEmailConfig,
+ *         knpu_oauth2_client?: KnpuOauth2ClientConfig,
+ *         symfonycasts_reset_password?: SymfonycastsResetPasswordConfig,
+ *         dama_doctrine_test?: DamaDoctrineTestConfig,
  *     },
  *     ...<string, ExtensionType|array{ // extra keys must follow the when@%env% pattern or match an extension alias
  *         imports?: ImportsConfig,

@@ -5,14 +5,211 @@
 {% block body %}
 
 <section class=" mx-auto mt-10 px-4">
-    <h1 class="text-4xl text-center mt-20">Mon planning</h1>
-    <div class="mt-10 max-w-4xl mx-auto">
-        <p class="text-lg text-center font-extralight">
-            Mon planning est en cours de construction. N'hésitez pas à me contacter pour plus d'informations ou pour réserver une séance.
+    <h1 class="text-4xl text-center mt-20 font-semibold">Mon planning</h1>
+    <p class="text-center mt-4 text-gray-600">
+        Découvrez mon planning mensuel pour ne rien manquer de mes activités et événements à venir.
+    </p>
+    {% if app.user and 'ROLE_ADMIN' in app.user.roles %}
+    <div class="flex justify-end mb-6 max-w-7xl mx-auto">
+        <a href="{{ path('app_add_activity') }}" class="px-4 py-2 bg-[#7a96a1] text-white text-shadow-md text-shadow-black rounded hover:bg-[#5a6b7a] transition">Ajouter une activité <i class="fa-solid fa-plus"></i></a>
+    </div>
+    {% endif %}
+
+    {# Prochaine activité #}
+    <div
+        data-controller="upcoming-activity"
+        data-upcoming-activity-activities-value='
+            {
+                {% for serviceId, activity in upcomingActivities %}
+                    "{{ serviceId }}": "{% if activity %}{{ activity.date|format_datetime(pattern='d MMMM yyyy', locale='fr') }} {% else %}{{ activity }}{% endif %}"
+                    {% if not loop.last %},{% endif %}
+                {% endfor %}
+            }
+        '
+        class="flex flex-col md:flex-row items-center justify-center gap-2 my-5 max-w-7xl mx-auto"
+    >
+        <p class="text-center text-blue-700">
+            Prochaine date pour l'activité suivante :
         </p>
-        <div class="mt-6 flex justify-center">
-            <a href="{{ path('app_contact') }}" class="inline-block px-6 py-3 bg-sky-300 text-white text-shadow-xs text-shadow-black rounded-full shadow-md hover:bg-sky-400 transition duration-300">Me contacter <i class="fa-solid fa-envelope"></i></a>
+
+        <select
+            data-upcoming-activity-target="service"
+            data-upcoming-activity-target="service"
+            data-action="change->upcoming-activity#updateUpcomingActivity"
+            class="px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+            {% for service in allServices %}
+                <option value="{{ service.id }}">
+                    {{ service.name }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <p
+            data-upcoming-activity-target="date"
+            class="text-center text-lg"
+        ></p>
+    </div>
+
+     {# Calendrier #}
+
+    <div data-controller="planning-export" data-planning-export-month-value="{{ currentMonth|format_datetime(pattern='MMMM-yyyy', locale="fr") }}" class="max-w-7xl mx-auto">
+
+        <div
+            data-planning-export-target="planning"
+            class="bg-sky-300 rounded-3xl p-2 md:p-4 overflow-x-auto"
+        >
+            <div class="flex justify-end w-full">
+                <img alt="Logo Oxymaux" src="{{ asset('images/logo2.jpeg') }}" class="w-16 h-16 rounded-full">
+            </div>
+
+            {# Légende des logos #}
+            {% if services|length > 0 %}
+            <div class="flex flex-col md:flex-row items-center gap-6 mb-6">
+                <h3 class="text-lg font-semibold text-gray-700">Activités proposées ce mois-ci :</h3>
+                <div class="flex-1 flex flex-wrap gap-4">
+                {% for service in services %}
+                    <div class="flex items-center gap-2">
+                        <img src="{{ asset('images/' ~ service.logo) }}" alt="{{ service.name }}" class="w-8 h-8 object-cover rounded-full">
+                        <span class="text-sm font-medium text-gray-700">{{ service.name }}</span>
+                    </div>
+                {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if currentMonth|date("Y-m") != "now"|date("Y-m") %}
+            <div data-planning-export-target="back" class="flex justify-start mb-4">
+                <a href="{{ path('app_planning') }}" class="text-blue-700 hover:text-pink-300 transition duration-300">
+                    <i class="fa-solid fa-arrow-left"></i> Revenir au mois actuel
+                </a>
+            </div>
+            {% endif %}
+            {# Titre du mois #}
+            <div data-planning-export-target="header" class="flex justify-between items-center mb-6">
+
+                <a href="{{ path('app_planning', {'month': previousMonth|date('Y-m')}) }}" class="px-2 py-1 bg-white rounded-lg hover:bg-pink-300 transition duration-300">
+                    ← {{ previousMonth|format_datetime(pattern='MMMM', locale="fr")|capitalize }}
+                </a>
+
+                <h2 class="text-xl md:text-3xl font-bold text-blue-700">
+                    {{ currentMonth|format_datetime(pattern='MMMM yyyy', locale="fr")|capitalize }}
+                </h2>
+
+                <a href="{{ path('app_planning', {'month': nextMonth|date('Y-m')}) }}" class="px-2 py-1 bg-white rounded-lg hover:bg-pink-300 transition duration-300">
+                    {{ nextMonth|format_datetime(pattern='MMMM', locale="fr")|capitalize }} →
+                </a>
+
+            </div>
+
+            {# Jours semaine #}
+            <div class="grid grid-cols-7 gap-1 mb-4">
+
+                {% set weekdays = ['L', 'M', 'M', 'J', 'V', 'S', 'D'] %}
+
+                {% for day in weekdays %}
+                    <div class="text-center text-xl font-bold text-blue-700">
+                        {{ day }}
+                    </div>
+                {% endfor %}
+
+            </div>
+
+            {# Grille calendrier #}
+            <div class="grid grid-cols-7 gap-1">
+
+                {# Cases vides avant début du mois #}
+                {% if startingDay > 1 %}
+                    {% for i in 1..(startingDay - 1) %}
+                        <div class="bg-transparent"></div>
+                    {% endfor %}
+                {% endif %}
+
+                {# Jours du mois #}
+                {% for day in 1.. daysInMonth %}
+
+                    <div class="
+                        {% if (day < "now"|date("j") and currentMonth|date("Y-m") == "now"|date("Y-m")) or (currentMonth|date("Y-m") < "now"|date("Y-m")) %}
+                        bg-gray-300
+                        {% else %}
+                        bg-white
+                        {% endif %}
+                        rounded-2xl
+                        {% if day == "now"|date("j") and currentMonth|date("Y-m") == "now"|date("Y-m") %}
+                            border-yellow-300
+                            border-4
+                        {% else %}
+                            border-pink-300
+                            md:border-2
+                        {% endif %}
+                        min-h-20
+                        md:min-h-40
+                        p-1
+                        shadow-sm
+                        hover:shadow-lg
+                        transition
+                    ">
+
+                        {# Numéro du jour #}
+                        <div class="text-lg md:text-xl font-bold text-sky-500">
+                            {{ day }}
+                        </div>
+
+                        {# Activités du jour #}
+                        {% for activity in activities %}
+                            {% if activity.date|date("j") == day %}
+                                <a href="{{ path('app_activity', {'id': activity.id}) }}" class="hidden md:flex flex-col items-center gap-2 mt-3 text-sm border border-sky-300 p-2 rounded-lg h-fit w-full relative">
+                                    <p class="flex justify-between items-center gap-2 w-full">
+                                        {% if activity.start and activity.end %}
+                                            {{ activity.start|date("H:i") }} - {{ activity.end|date("H:i") }}
+                                        {% elseif activity.start %}
+                                            {{ activity.start|date("H:i") }}
+                                        {% else %}
+                                            <span>Horaires à définir</span>
+                                        {% endif %}
+                                        <img src="{{ asset('images/' ~ activity.service.logo) }}" alt="{{ activity.service.name }}" class="w-8 h-8 object-cover rounded-full"></p>
+                                    <p>{{ activity.service.name }}</p>
+                                    {% if activity.canceled %}
+                                        <span class="absolute bottom-2 -right-2 z-50 transform -rotate-45 bg-red-500 text-white text-xs px-2 py-1 rounded-full">Annulée</span>
+                                    {% elseif activity.id in fullActivities %}
+                                        <span class="absolute bottom-2 -right-2 z-50 transform -rotate-45 bg-yellow-500 text-black text-xs px-2 py-1 rounded-full">Complet</span>
+                                    {% endif %}
+                                </a>
+                                <a href="{{ path('app_activity', {'id': activity.id}) }}" class="md:hidden flex justify-center mt-1 relative">
+                                    <img src="{{ asset('images/' ~ activity.service.logo) }}" alt="{{ activity.service.name }}" class="w-8 h-8 object-cover rounded-full">
+                                    {% if activity.canceled %}
+                                        <div class="absolute top-0 right-0 z-50 bg-red-500 w-2 h-2 rounded-full"></div>
+                                    {% elseif activity.id in fullActivities %}
+                                        <div class="absolute top-0 right-0 z-50 bg-yellow-500 w-2 h-2 rounded-full"></div>
+                                    {% endif %}
+                                </a>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
         </div>
+        <div class="md:hidden flex items-center gap-2 mt-4 ml-2">
+            <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
+            <p class="text-xs text-gray-700">Activité complète</p>
+        </div>
+        <div class="md:hidden flex items-center gap-2 ml-2">
+            <div class="w-2 h-2 bg-red-500 rounded-full"></div>
+            <p class="text-xs text-gray-700">Activité annulée</p>
+        </div>
+        {% if app.user and 'ROLE_ADMIN' in app.user.roles %}
+            <div class="hidden md:flex justify-center mt-4">
+                <button
+                    data-action="click->planning-export#download"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer transition duration-300"
+                >
+                    <i class="fa-solid fa-download"></i> Télécharger le planning
+                </button>
+            </div>
+        {% endif %}
     </div>
 </section>
 {% endblock %}

@@ -1,0 +1,205 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Oxymaux - Mes services{% endblock %}
+
+{% block body %}
+
+<section class=" mx-auto mt-10 px-4">
+    <h1 class="text-4xl text-center mt-20 font-semibold mb-10">Modifier un service : {{ service.name }}</h1>
+    <div class="w-full flex justify-center items-center gap-6 mx-auto max-w-7xl">
+        {{ form_start(form, {'attr': {'class': 'bg-sky-100 w-full flex flex-col gap-6 p-6 rounded-lg shadow-lg'}}) }}
+            <div class="flex w-full gap-6 bg-white p-4 rounded-lg border border-gray-300">
+                {{ form_label(form.name, 'Nom du service', {'label_attr': {'class': 'w-1/3'}}) }}
+                {{ form_widget(form.name, {'attr': {'class': 'w-2/3 px-4 py-2 font-bold', 'readonly': 'readonly'}}) }}
+            </div>
+            <div class="flex w-full gap-6 bg-white p-4 rounded-lg border border-gray-300">
+                {{ form_label(form.resume, 'Résumé du service', {'label_attr': {'class': 'w-1/3'}}) }}
+                {{ form_widget(form.resume, {'attr': {'class': 'bg-white w-2/3 px-4 py-2', 'data-controller': 'tinymce', 'data-tinymce-height-value': 200}}) }}
+            </div>
+            <div class="flex w-full gap-6 bg-white p-4 rounded-lg border border-gray-300">
+                {{ form_label(form.description, 'Description du service', {'label_attr': {'class': 'w-1/3'}}) }}
+                {{ form_widget(form.description, {'attr': {'class': 'bg-white w-2/3 h-32 px-4 py-2', 'data-controller': 'tinymce', 'data-tinymce-height-value': 300}}) }}
+            </div>
+            <div class="flex w-full gap-6 items-start bg-white p-4 rounded-lg border border-gray-300">
+                {{ form_label(form.image, 'Image du service', {
+                    'label_attr': {'class': 'w-1/3'}
+                }) }}
+
+                <div class="w-2/3 flex flex-col gap-4" data-controller="file-upload">
+
+                    {% if service.image %}
+                        <img
+                            src="{{ asset('images/' ~ service.image) }}"
+                            alt="{{ service.name }}"
+                            class="w-48 rounded shadow"
+                        >
+                        <p class="text-sm text-gray-600">Image actuelle : {{ service.image }}</p>
+                        <p class="text-sm text-gray-600">Pour changer l'image, sélectionner un nouveau fichier ci-dessous.</p>
+                    {% endif %}
+
+                    <label
+                        for="{{ form.image.vars.id }}"
+                        class="inline-flex items-center justify-center px-4 py-2 bg-sky-500 text-white rounded cursor-pointer hover:bg-sky-600 transition w-fit"
+                    >
+                        Sélectionner une image
+                    </label>
+
+                    {{ form_widget(form.image, {
+                        'attr': {
+                            'class': 'hidden',
+                            'data-file-upload-target': 'input',
+                            'data-action': 'change->file-upload#updateFilename'
+                        }
+                    }) }}
+
+                    <span
+                        data-file-upload-target="filename"
+                        class="text-sm text-gray-600"
+                    >
+                        Aucun fichier sélectionné
+                    </span>
+
+                </div>
+            </div>
+            <div class="flex w-full gap-6 items-start bg-white p-4 rounded-lg border border-gray-300">
+                {{ form_label(form.logo, 'Logo du service', {
+                    'label_attr': {'class': 'w-1/3'}
+                }) }}
+
+                <div class="w-2/3 flex flex-col gap-4" data-controller="file-upload">
+
+                    {% if service.logo %}
+                        <img
+                            src="{{ asset('images/' ~ service.logo) }}"
+                            alt="{{ service.name }}"
+                            class="w-48 rounded shadow"
+                        >
+                        <p class="text-sm text-gray-600">Logo actuel : {{ service.logo }}</p>
+                        <p class="text-sm text-gray-600">Pour changer le logo, sélectionner un nouveau fichier ci-dessous.</p>
+                    {% endif %}
+
+                    <label
+                        for="{{ form.logo.vars.id }}"
+                        class="inline-flex items-center justify-center px-4 py-2 bg-sky-500 text-white rounded cursor-pointer hover:bg-sky-600 transition w-fit"
+                    >
+                        Sélectionner un logo
+                    </label>
+
+                    {{ form_widget(form.logo, {
+                        'attr': {
+                            'class': 'hidden',
+                            'data-file-upload-target': 'input',
+                            'data-action': 'change->file-upload#updateFilename'
+                        }
+                    }) }}
+
+                    <span
+                        data-file-upload-target="filename"
+                        class="text-sm text-gray-600"
+                    >
+                        Aucun fichier sélectionné
+                    </span>
+
+                </div>
+            </div>
+            <h2 class="text-lg font-semibold mt-8 mb-4">
+                Tarifs du service
+            </h2>
+
+            <div
+                data-controller="collection tarifs-sort"
+                data-collection-index-value="{{ form.tarifs|length > 0 ? form.tarifs|last.vars.name + 1 : 0 }}"
+                data-collection-prototype-value="{{ form_widget(form.tarifs.vars.prototype)|e('html_attr') }}"
+                class="w-full"
+            >
+
+                <div
+                    data-collection-target="container"
+                    data-tarifs-sort-target="container"
+                    class="flex flex-col gap-4"
+                >
+
+                    {% for tarifForm in form.tarifs %}
+
+                        <div class="tarif-item bg-white p-4 rounded border border-sky-300 shadow space-y-4" data-tarifs-sort-target="item">
+
+                            <div class="flex gap-4 items-start w-full">
+
+                                <button
+                                    type="button"
+                                    class="drag-handle mt-10 text-gray-400 hover:text-black cursor-move"
+                                >
+                                    ☰
+                                </button>
+
+                                <div class="flex-1 flex flex-col gap-4 w-full">
+
+                                    <div class="flex gap-6 w-full">
+                                        {{ form_label(tarifForm.name, 'Nom du tarif', {'label_attr': {'class': 'w-1/5 text-right'}}) }}
+                                        {{ form_widget(tarifForm.name, {'attr': {'class': 'ml-4 border border-sky-300 rounded px-2 py-1 w-4/5'}}) }}
+                                    </div>
+
+                                    <div class="flex gap-6 w-full">
+                                        {{ form_label(tarifForm.price, 'Prix (en €)', {'label_attr': {'class': 'w-1/5 text-right'}}) }}
+                                        {{ form_widget(tarifForm.price, {'attr': {'class': 'ml-4 border border-sky-300 rounded px-2 py-1 w-3/5'}}) }}
+                                        {{ form_label(tarifForm.type, 'Type de tarif', {'label_attr': {'class': 'hidden'}}) }}
+                                        {{ form_widget(tarifForm.type, {'attr': {'class': 'ml-4 border border-sky-300 rounded px-2 py-1 w-1/5'}}) }}
+                                    </div>
+
+                                    <div class="flex gap-6 w-full">
+                                        {{ form_label(tarifForm.comment, 'Précisions (optionnel)', {'label_attr': {'class': 'w-1/5 text-right'}}) }}
+                                        {{ form_widget(tarifForm.comment, {'attr': {'class': 'ml-4 border border-sky-300 rounded px-2 py-1 w-4/5'}}) }}
+                                    </div>
+
+                                    {{ form_widget(tarifForm.position) }}
+
+                                </div>
+
+                                <button
+                                    type="button"
+                                    data-action="collection#remove"
+                                    class="mt-10 text-red-500 hover:text-red-700"
+                                >
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+                <button
+                    type="button"
+                    data-action="collection#add"
+                    class="mt-4 px-4 py-2 bg-sky-500 text-white rounded hover:bg-sky-600 transition"
+                >
+                    + Ajouter un tarif
+                </button>
+
+            </div>
+            <div class="flex w-full gap-6 justify-start items-center bg-white p-4 rounded-lg border border-gray-300 shadow">
+                {{ form_label(form.kmPrice, 'Frais de déplacement (optionnel)', {'label_attr': {'class': 'w-1/4'}}) }}
+                {{ form_widget(form.kmPrice, {'attr': {'class': 'w-1/4 border border-sky-300 rounded'}}) }}
+            </div> 
+            <div data-controller="confirm" class="flex justify-center gap-4">
+                <a href="{{ path('app_services') }}" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition cursor-pointer">Annuler</a>
+                <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition cursor-pointer">Enregistrer les modifications</button>
+                <button type="button" data-action="click->confirm#openModal" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition cursor-pointer ml-2">Supprimer le service</button>
+                <div class="hidden fixed inset-0 flex items-center justify-center z-50" data-confirm-target="modal">
+                    <div class="bg-white p-6 rounded-lg shadow-lg shadow-sky-500">
+                        <p class="mb-4">Êtes-vous sûr de vouloir supprimer ce service ?</p>
+                        <p class="mb-4 text-center"><strong>{{ service.name }}</strong></p>
+                        <div class="flex justify-center gap-4">
+                            <a href="{{ path('app_services_delete', {'id': service.id}) }}" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition">Oui, supprimer</a>
+                            <button type="button" data-action="click->confirm#cancel" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition cursor-pointer">Non, annuler</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {{ form_end(form) }}
+    </div>
+</section>
+{% endblock %}

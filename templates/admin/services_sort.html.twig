@@ -1,0 +1,26 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Oxymaux - Trier les services{% endblock %}
+
+{% block body %}
+<section class="mx-auto mt-10 px-4">
+    <h1 class="text-4xl text-center mt-20 font-semibold mb-10">Trier les services</h1>
+    <div class="w-full flex justify-end items-center gap-6 mx-auto max-w-7xl">
+        <a href="{{ path('app_services') }}" class="px-4 py-2 bg-[#7a96a1] text-white rounded hover:bg-[#6b8490] transition">Retour à la liste des services</a>
+    </div>
+    <form data-controller="tarifs-sort" method="post" action="{{ path('app_services_sort') }}" class="max-w-2xl mx-auto mt-6 flex flex-col items-center">
+        <div data-tarifs-sort-target="container" class="space-y-4">
+            {% for service in services %}
+                <div class="drag-handle p-4 bg-sky-300 rounded cursor-move tarif-item flex gap-4 items-center w-full" data-id="{{ service.id }}">
+                    <button type="button" class="text-black cursor-move">
+                        ☰
+                    </button>
+                    <span class="font-semibold">{{ service.name }}</span>
+                    <input type="hidden" name="services[{{ service.id }}][position]" value="{{ service.position }}">
+                </div>
+            {% endfor %}
+        </div>
+        <button type="submit" class="mt-4 px-4 py-2 bg-[#7a96a1] text-white rounded hover:bg-[#6b8490] transition cursor-pointer">Enregistrer l'ordre</button>
+    </form>
+</section>
+{% endblock %}

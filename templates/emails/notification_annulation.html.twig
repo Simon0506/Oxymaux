@@ -1,0 +1,5 @@
+<h1>Annulation de réservation</h1>
+<p>{{ reservation.dog.user.firstname }} {{ reservation.dog.user.lastname }} vient d'annuler la réservation de {{ reservation.dog.fullName }} pour l'activité "{{ reservation.activity.service.name }}" du {{ reservation.activity.date|date('d/m/Y') }}.</p>
+{% if reason %}
+    <p><strong>Raison de l'annulation :</strong> {{ reason }}</p>
+{% endif %}

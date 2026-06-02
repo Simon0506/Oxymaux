@@ -1,0 +1,39 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Oxymaux - {{ client.firstname }} {{ client.lastname }}{% endblock %}
+
+{% block body %}
+    <section class="max-w-7xl mx-auto mt-10">
+        <a href="{{ path('app_clients') }}" class="text-sky-600 hover:text-sky-800 font-medium transition-colors duration-150 mb-6 inline-block text-sm">
+            <i class="fa-solid fa-arrow-left"></i> Retour à la liste des clients
+        </a>
+        <div class="w-full flex flex-col items-center gap-6">
+            <h1 class="text-3xl font-bold">Fiche de {{ client.firstname }} {{ client.lastname }}</h1>
+            
+            <div class="w-full bg-white rounded shadow-lg p-6 max-w-4xl mx-auto">
+                <h2 class="text-xl font-semibold mb-4">Informations personnelles</h2>
+                <p><strong>Nom :</strong> {{ client.lastname }}</p>
+                <p><strong>Prénom :</strong> {{ client.firstname }}</p>
+                <p><strong>Email :</strong> {{ client.email }}</p>
+                <p><strong>Adresse :</strong> {{ client.address }} - {{ client.postalCode }} {{ client.city }}</p>
+                <p><strong>Numéro de téléphone :</strong> {% if client.phone %}{{ client.phone }}{% else %}Non renseigné{% endif %}</p>
+                
+                <h2 class="text-xl font-semibold mt-6 mb-4">Chien(s) associé(s)</h2>
+                {% if client.dogs|length > 0 %}
+                    <div class="flex flex-wrap gap-4">
+                        {% for dog in client.dogs %}
+                            <div class="w-fit bg-white border border-gray-200 p-4 rounded-lg shadow-lg mb-2">
+                                <p><strong>{{ dog.fullName }}</strong></p>
+                                {% if dog.photo %}
+                                    <img src="{{ asset('images/' ~ dog.photo) }}" alt="{{ dog.fullName }}" class="max-w-xs h-32 w-full mt-2 rounded object-cover">
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                {% else %}
+                    <p class="text-gray-400 italic">Aucun chien renseigné</p>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+{% endblock %}

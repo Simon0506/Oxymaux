@@ -1,0 +1,4 @@
+<h1>Nouvelle demande d'inscription à une activité</h1>
+<p>L'utilisateur {{ dog.user.firstname }} {{ dog.user.lastname }} souhaite inscrire {{ dog.fullName }} à l'activité "{{ activity.service.name }}" prévue le {{ activity.date|date('d/m/Y') }}.</p>
+<p>Merci de valider ou refuser cette inscription dans l'administration.</p>
+<a href="{{ url('app_reservations_admin') }}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 5px;">Voir la réservation</a>

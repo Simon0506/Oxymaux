@@ -1,0 +1,282 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mon compte{% endblock %}
+
+{% block body %}
+<section class=" mx-auto mt-10 px-4">
+    <h1 class="text-4xl text-center mt-20 font-semibold">Mon compte</h1>
+    <div class="flex flex-col md:flex-row gap-8 mt-10">
+        <div class="w-full flex flex-col items-center gap-6 mx-auto max-w-2xl">
+            <h2 class="text-2xl font-semibold mt-10 underline underline-offset-4">Mes informations personnelles</h2>
+            {{ form_start(profileForm, {'attr': {'class': 'flex flex-col gap-4 mt-4 bg-sky-100 p-6 rounded shadow-lg w-full'}}) }}
+                <div class="flex items-center gap-4">
+                    {{ form_label(profileForm.firstname, 'Prénom', {'label_attr': {'class': 'w-1/4'}}) }}
+                    {{ form_widget(profileForm.firstname, {'attr': {'class': 'w-3/4 bg-white px-2 py-1 rounded border-gray-300 shadow-sm focus:ring-sky-500 focus:border-sky-500'}}) }}
+                </div>
+                <div class="flex items-center gap-4">
+                    {{ form_label(profileForm.lastname, 'Nom', {'label_attr': {'class': 'w-1/4'}}) }}
+                    {{ form_widget(profileForm.lastname, {'attr': {'class': 'w-3/4 bg-white px-2 py-1 rounded border-gray-300 shadow-sm focus:ring-sky-500 focus:border-sky-500'}}) }}
+                </div>
+                <div class="flex items-center gap-4">
+                    {{ form_label(profileForm.phone, 'Téléphone', {'label_attr': {'class': 'w-1/4'}}) }}
+                    {{ form_widget(profileForm.phone, {'attr': {'class': 'w-3/4 bg-white px-2 py-1 rounded border-gray-300 shadow-sm focus:ring-sky-500 focus:border-sky-500'}}) }}
+                </div>
+                <div class="flex items-center gap-4">
+                    {{ form_label(profileForm.address, 'Adresse', {'label_attr': {'class': 'w-1/4'}}) }}
+                    {{ form_widget(profileForm.address, {'attr': {'class': 'w-3/4 bg-white px-2 py-1 rounded border-gray-300 shadow-sm focus:ring-sky-500 focus:border-sky-500'}}) }}
+                </div>
+                <div class="flex items-center gap-4">
+                    {{ form_label(profileForm.postalCode, 'Code postal', {'label_attr': {'class': 'w-1/4'}}) }}
+                    {{ form_widget(profileForm.postalCode, {'attr': {'class': 'w-3/4 bg-white px-2 py-1 rounded border-gray-300 shadow-sm focus:ring-sky-500 focus:border-sky-500'}}) }}
+                </div>
+                <div class="flex items-center gap-4">
+                    {{ form_label(profileForm.city, 'Ville', {'label_attr': {'class': 'w-1/4'}}) }}
+                    {{ form_widget(profileForm.city, {'attr': {'class': 'w-3/4 bg-white px-2 py-1 rounded border-gray-300 shadow-sm focus:ring-sky-500 focus:border-sky-500'}}) }}
+                </div>
+                <div class="flex justify-center mt-6">
+                    <button type="submit" class="px-4 py-2 bg-[#7a96a1] text-white text-shadow-md text-shadow-black rounded hover:bg-[#5a6b7a] transition cursor-pointer">Mettre à jour</button>
+                </div>
+            {{ form_end(profileForm) }}
+            <h2 class="text-2xl font-semibold mt-10 underline underline-offset-4">Mes informations de connexion</h2>
+            {{ form_start(passwordForm, {'attr': {'class': 'flex flex-col gap-4 mt-4 bg-sky-100 p-6 rounded shadow-lg w-full', 'data-turbo': 'false'}}) }}
+                {{ form_errors(passwordForm) }}
+                <div class="flex items-center gap-4">
+                    <p class="w-1/4">Email : </p>
+                    <p class="w-3/4 px-2 py-1">{{ user.email }}</p>
+                </div>
+                <div data-controller="password-visibility" class="flex items-center gap-4">
+                    {{ form_label(passwordForm.currentPassword, 'Mot de passe actuel', {'label_attr': {'class': 'w-1/4'}}) }}
+                    <div class="relative w-3/4">
+                        {{ form_widget(passwordForm.currentPassword, {
+                            attr: {
+                                class: 'w-full bg-white px-2 py-1 pr-10 rounded border-gray-300 shadow-sm',
+                                'data-password-visibility-target': 'input'
+                            }
+                        }) }}
+
+                        <button type="button" data-action="click->password-visibility#toggle" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                {% if passwordForm.currentPassword.vars.errors|length > 0 %}
+                    <div class="text-red-700 bg-red-100 text-sm mb-2">
+                        {{ form_errors(passwordForm.currentPassword) }}
+                    </div>
+                {% endif %}
+                <div data-controller="password-visibility" class="flex items-center gap-4">
+                    {{ form_label(passwordForm.newPassword.first, 'Nouveau mot de passe', {'label_attr': {'class': 'w-1/4'}}) }}
+                    <div class="relative w-3/4">
+                        {{ form_widget(passwordForm.newPassword.first, {
+                            attr: {
+                                class: 'w-full bg-white px-2 py-1 pr-10 rounded border-gray-300 shadow-sm',
+                                'data-password-visibility-target': 'input'
+                            }
+                        }) }}
+
+                        <button type="button" data-action="click->password-visibility#toggle" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div data-controller="password-visibility" class="flex items-center gap-4">
+                    {{ form_label(passwordForm.newPassword.second, 'Confirmer le nouveau mot de passe', {'label_attr': {'class': 'w-1/4'}}) }}
+                    <div class="relative w-3/4">
+                        {{ form_widget(passwordForm.newPassword.second, {
+                            attr: {
+                                class: 'w-full bg-white px-2 py-1 pr-10 rounded border-gray-300 shadow-sm',
+                                'data-password-visibility-target': 'input'
+                            }
+                        }) }}
+
+                        <button type="button" data-action="click->password-visibility#toggle" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                {% if passwordForm.newPassword.first.vars.errors|length > 0 %}
+                    <div class="text-red-700 bg-red-100 text-sm mb-2">
+                        {{ form_errors(passwordForm.newPassword.first) }}
+                    </div>
+                {% endif %}
+                <div class="flex justify-center mt-6">
+                    <button class="px-4 py-2 bg-[#7a96a1] text-white text-shadow-md text-shadow-black rounded hover:bg-[#5a6b7a] transition cursor-pointer" type="submit">
+                        Mettre à jour mon mot de passe
+                    </button>
+                </div>
+            {{ form_end(passwordForm) }}
+        </div>
+
+
+        <div class="{% if 'ROLE_ADMIN' in app.user.roles %}hidden{% endif %} w-full flex flex-col items-center gap-6 mx-auto max-w-3xl">
+            <h2 class="text-2xl font-semibold mt-10 underline underline-offset-4">Mes chiens</h2>
+            {% for dog in user.dogs %}
+                <div class="w-full bg-sky-100 p-4 rounded shadow-lg flex flex-col md:flex-row justify-between items-center gap-4 mb-2 relative">
+                    <div class="flex flex-col items-start gap-2 w-full md:w-2/3">
+                        <div data-controller="dog" class="flex items-center gap-2 w-full">
+                            <button type="button" data-dog-target="button" data-action="click->dog#toggle" title="Modifier le nom" class="cursor-pointer"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <span class="text-sm">Nom : </span>
+                            <span data-dog-target="actualValue" class="font-semibold text-xl">{{ dog.name }}</span>
+                            <form data-dog-target="form" method="post" action="{{ path('app_dog_edit', {'id': dog.id}) }}" class="hidden flex items-center justify-between md:justify-start gap-2 flex-1">
+                                <input type="text" name="name" value="{{ dog.name }}" class="bg-white px-2 py-1 rounded border-gray-300 shadow-sm focus:ring-sky-500 focus:border-sky-500 flex-1">
+                                <button type="submit" title="Valider" class="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition cursor-pointer">
+                                    <i class="fa-solid fa-check"></i>
+                                </button>
+                                <button type="button" data-action="click->dog#toggle" title="Annuler" class="px-2 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition cursor-pointer">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </form>
+                        </div>
+                        <div data-controller="dog" class="flex items-center gap-2 w-full">
+                            <button type="button" data-dog-target="button" data-action="click->dog#toggle" title="Modifier la race" class="cursor-pointer"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <span class="text-sm">Race : </span>
+                            <span data-dog-target="actualValue">{{ dog.race }}</span>
+                            <form data-dog-target="form" method="post" action="{{ path('app_dog_edit', {'id': dog.id}) }}" class="hidden flex items-center justify-between md:justify-start gap-2 flex-1">
+                                <input type="text" name="race" value="{{ dog.race }}" class="bg-white px-2 py-1 rounded border-gray-300 shadow-sm focus:ring-sky-500 focus:border-sky-500 flex-1">
+                                <button type="submit" title="Valider" class="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition cursor-pointer">
+                                    <i class="fa-solid fa-check"></i>
+                                </button>
+                                <button type="button" data-action="click->dog#toggle" title="Annuler" class="px-2 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition cursor-pointer">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </form>
+                        </div>
+                        <div data-controller="dog" class="flex items-center gap-2 w-full">
+                            <button type="button" data-dog-target="button" data-action="click->dog#toggle" title="Modifier la date de naissance" class="cursor-pointer"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <p data-dog-target="actualValue"><span class='text-sm'>Age : </span>{{ dog.age }} ans</p>
+                            <form data-dog-target="form" method="post" action="{{ path('app_dog_edit', {'id': dog.id}) }}" class="hidden flex items-center justify-between md:justify-start gap-2 flex-1">
+                                <label for="dateOfBirth_{{ dog.id }}" class="text-sm">Date de naissance : </label>
+                                <input type="date" id="dateOfBirth_{{ dog.id }}" name="dateOfBirth" value="{{ dog.dateOfBirth|date('Y-m-d') }}" class="bg-white px-2 py-1 rounded border-gray-300 shadow-sm focus:ring-sky-500 focus:border-sky-500 flex-1">
+                                <button type="submit" title="Valider" class="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition cursor-pointer">
+                                    <i class="fa-solid fa-check"></i>
+                                </button>
+                                <button type="button" data-action="click->dog#toggle" title="Annuler" class="px-2 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition cursor-pointer">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </form>
+                        </div>
+                        <div data-controller="dog" class="flex items-center gap-2 w-full">
+                            <button type="button" data-dog-target="button" data-action="click->dog#toggle" title="Modifier le sexe" class="cursor-pointer"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <span class="text-sm">Sexe : </span>
+                            <span data-dog-target="actualValue">{{ dog.sexe }}</span>
+                            <form data-dog-target="form" method="post" action="{{ path('app_dog_edit', {'id': dog.id}) }}" class="hidden flex items-center justify-between md:justify-start gap-2 flex-1">
+                                <select name="sexe" class="bg-white px-2 py-1 rounded border-gray-300 shadow-sm focus:ring-sky-500 focus:border-sky-500 flex-1">
+                                    <option value="Male" {% if dog.sexe == 'Male' %}selected{% endif %}>Male</option>
+                                    <option value="Femelle" {% if dog.sexe == 'Femelle' %}selected{% endif %}>Femelle</option>
+                                </select>
+                                <button type="submit" title="Valider" class="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition cursor-pointer">
+                                    <i class="fa-solid fa-check"></i>
+                                </button>
+                                <button type="button" data-action="click->dog#toggle" title="Annuler" class="px-2 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition cursor-pointer">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="w-full md:w-1/3 relative">
+                        {% if dog.photo %}
+                            <img src="{{ asset('images/' ~ dog.photo) }}" alt="{{ dog.name }}" class="w-full h-32 rounded object-cover">
+                            <form data-controller="file-upload" method="post" action="{{ path('app_dog_edit', {'id': dog.id}) }}" enctype="multipart/form-data" class="absolute top-2 right-2">
+                                <label for="photo_{{ dog.id }}" class="px-2 py-1 bg-[#7a96a1] text-white text-shadow-md text-shadow-black rounded hover:bg-[#5a6b7a] transition cursor-pointer text-sm" title="Modifier la photo">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </label>
+                                <input type="file" id="photo_{{ dog.id }}" name="photo" accept="image/*" class="sr-only" data-action="change->file-upload#submitForm">
+                            </form>
+                        {% else %}
+                            <form data-controller="file-upload" method="post" action="{{ path('app_dog_edit', {'id': dog.id}) }}" enctype="multipart/form-data" class="flex flex-col items-center gap-3">
+    
+                                <input type="file" 
+                                    id="dog_photo_input"
+                                    name="photo" 
+                                    accept="image/*" 
+                                    class="sr-only" 
+                                    data-file-upload-target="input"
+                                    data-action="change->file-upload#submitForm">
+
+                                <label for="dog_photo_input" class="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded shadow-sm hover:bg-gray-50 transition cursor-pointer text-sm font-medium inline-flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-500">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                                    </svg>
+                                    Ajouter une photo
+                                </label>
+                            </form>
+                        {% endif %}
+                    </div>
+                    <div data-controller="confirm" class="absolute w-full top-2 md:top-auto md:bottom-2 right-2 flex justify-end md:justify-center">
+                        <button type="button" data-action="click->confirm#openModal" class="px-2 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 transition cursor-pointer ml-2">Supprimer</button>
+                        <div class="hidden fixed inset-0 flex items-center justify-center z-50" data-confirm-target="modal">
+                            <div class="bg-white p-6 rounded-lg shadow-lg shadow-sky-500">
+                                <p class="mb-4">Êtes-vous sûr de vouloir supprimer ce chien de votre liste ?</p>
+                                <p class="mb-4 text-center"><strong>{{ dog.name }}</strong></p>
+                                <div class="flex justify-center gap-4">
+                                    <a href="{{ path('app_dog_delete', {'id': dog.id}) }}" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition">Oui, supprimer</a>
+                                    <button type="button" data-action="click->confirm#cancel" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition cursor-pointer">Non, annuler</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+            <div data-controller="dog" class="w-full flex justify-center mt-6">
+                <button data-action="click->dog#addDog" data-dog-target="button" class="px-4 py-2 bg-[#7a96a1] text-white text-shadow-md text-shadow-black rounded hover:bg-[#5a6b7a] transition cursor-pointer">
+                    Ajouter un chien <i class="fa-solid fa-plus"></i>
+                </button>
+                {{ form_start(dogForm, {'attr': {'class': 'hidden bg-sky-100 w-full flex flex-col gap-4 p-4', 'data-dog-target': 'form'}}) }}
+                    {{ form_errors(dogForm) }}
+                    <div class="flex items-center gap-4">
+                        {{ form_label(dogForm.name, 'Nom *', {'label_attr': {'class': 'w-1/4'}}) }}
+                        {{ form_widget(dogForm.name, {'attr': {'class': 'w-3/4 bg-white px-2 py-1 rounded border-gray-300 shadow-sm focus:ring-sky-500 focus:border-sky-500'}}) }}
+                    </div>
+                    <div class="flex items-center gap-4">
+                        {{ form_label(dogForm.race, 'Race *', {'label_attr': {'class': 'w-1/4'}}) }}
+                        {{ form_widget(dogForm.race, {'attr': {'class': 'w-3/4 bg-white px-2 py-1 rounded border-gray-300 shadow-sm focus:ring-sky-500 focus:border-sky-500'}}) }}
+                    </div>
+                    <div class="flex items-center gap-4">
+                        {{ form_label(dogForm.dateOfBirth, 'Date de naissance *', {'label_attr': {'class': 'w-1/4'}}) }}
+                        {{ form_widget(dogForm.dateOfBirth, {'attr': {'class': 'w-3/4 bg-white px-2 py-1 rounded border-gray-300 shadow-sm focus:ring-sky-500 focus:border-sky-500'}}) }}
+                    </div>
+                    <div class="flex items-center gap-4">
+                        {{ form_label(dogForm.sexe, 'Sexe *', {'label_attr': {'class': 'w-1/4'}}) }}
+                        {{ form_widget(dogForm.sexe, {'attr': {'class': 'w-3/4 bg-white px-2 py-1 rounded border-gray-300 shadow-sm focus:ring-sky-500 focus:border-sky-500'}}) }}
+                    </div>
+                    <div class="flex w-full gap-6 items-start">
+                        {{ form_label(dogForm.photo, 'Photo', {
+                            'label_attr': {'class': 'w-1/3'}
+                        }) }}
+                        <div class="w-2/3 flex flex-col gap-4" data-controller="file-upload">
+                            <label
+                                for="{{ dogForm.photo.vars.id }}"
+                                class="inline-flex items-center justify-center px-4 py-2 bg-sky-500 text-white rounded cursor-pointer hover:bg-sky-600 transition w-fit"
+                            >
+                                Sélectionner une photo
+                            </label>
+                            {{ form_widget(dogForm.photo, {
+                                'attr': {
+                                    'class': 'hidden',
+                                    'data-file-upload-target': 'input',
+                                    'data-action': 'change->file-upload#updateFilename'
+                                }
+                            }) }}
+                            <span
+                                data-file-upload-target="filename"
+                                class="text-sm text-gray-600"
+                            >
+                                Aucun fichier sélectionné
+                            </span>
+                        </div>
+                    </div>
+                    <div class="flex justify-center mt-6">
+                        <button type="button" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition cursor-pointer mr-2" data-action="click->dog#cancelAdd">
+                            Annuler
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-[#7a96a1] text-white text-shadow-md text-shadow-black rounded hover:bg-[#5a6b7a] transition cursor-pointer">
+                            Ajouter
+                        </button>
+                    </div>
+                    <div class="text-xs text-gray-700 mt-2">* Champs obligatoires</div>
+                {{ form_end(dogForm) }}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

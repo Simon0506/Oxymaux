@@ -1,0 +1,4 @@
+services:
+    # On remplace l'implémentation réelle par le mock dans l'environnement de test
+    App\Security\EmailVerifier:
+        class: App\Tests\Mocks\EmailVerifierMock

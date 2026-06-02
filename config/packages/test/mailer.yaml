@@ -1,0 +1,4 @@
+# config/packages/test/mailer.yaml
+framework:
+    mailer:
+        dsn: 'null://default' # Évite l'envoi réel

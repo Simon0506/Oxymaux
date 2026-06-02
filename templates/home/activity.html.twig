@@ -1,0 +1,103 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Oxymaux - Détails de l'activité{% endblock %}
+
+{% block body %}
+
+<section class="max-w-7xl mx-auto mt-10 px-4">
+    <a href="{{ path('app_planning') }}" class="text-gray-600 hover:text-gray-800 transition duration-300">
+        <i class="fa-solid fa-arrow-left"></i> Revenir au planning
+    </a>
+    <h1 class="text-4xl text-center mt-10 font-semibold">
+        <span>{{ activity.date|format_datetime(pattern='d MMMM yyyy', locale="fr") }}</span>
+        {% if activity.start and activity.end %}
+            <span>de {{ activity.start|date("H:i") }} à {{ activity.end|date("H:i") }}</span>
+        {% elseif activity.start %}
+            <span>à partir de {{ activity.start|date("H:i") }}</span>
+        {% endif %}
+    </h1>
+
+    {% if activity.date|date('Y-m-d') > "now"|date('Y-m-d') or (activity.date|date('Y-m-d') == "now"|date('Y-m-d') and (activity.start|date('H:i') > "now"|date('H:i') or activity.start is null)) %}
+        {% if activity.canceled %}
+            <p class="text-center text-sm text-red-500 mt-6">Activité annulée</p>
+        {% elseif not activity.openToAll and nbPlacesRestantes <= 0 %}
+            <p class="text-center text-sm text-red-500 mt-6">Activité complète</p>
+        {% elseif not activity.openToAll and nbPlacesRestantes > 0 %}
+            <p class="text-center text-sm text-green-500 mt-6">
+                Il reste {{ nbPlacesRestantes }} place{{ nbPlacesRestantes > 1 ? 's' : '' }} disponible{{ nbPlacesRestantes > 1 ? 's' : '' }}.
+            </p>
+        {% endif %}
+    {% endif %}
+
+    {# Détails de l'activité #}
+    <div class="flex flex-col items-center gap-6 w-full max-w-3xl mx-auto mt-10">
+        <div class="bg-sky-200 rounded-lg p-6 shadow-md shadow-black flex flex-col md:flex-row justify-around items-center gap-4 w-full">
+            {% if activity.service.image %}
+                <img src="{{ asset('images/' ~ activity.service.image) }}" alt="{{ activity.service.name }}" class="w-64 h-40 object-cover rounded-lg">
+            {% else %}
+                <div class="w-64 h-40 rounded-xl shadow-lg bg-white flex flex-col items-center justify-center">
+                    <i class="fa-solid fa-paw text-sky-300 text-6xl"></i>
+                    <p class="text-sky-300 text-2xl font-semibold mt-4">Image à venir</p>
+                </div>
+            {% endif %}
+            <div class="flex flex-col justify-center items-center gap-2">
+                <p class="text-center text-2xl text-blue-700 font-semibold">
+                    {{ activity.service.name }}
+                </p>
+                {% if activity.comment and (activity.openToAll or activity.nbPlaces > 0) %}
+                    <div class="bg-yellow-200 rounded-lg p-6">
+                        <p class="text-center text-sm">
+                            <span class="text-red-500 text-lg"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                            <span>{{ activity.comment }}</span>
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {% if not activity.canceled and (activity.date|date('Y-m-d') > "now"|date('Y-m-d') or (activity.date|date('Y-m-d') == "now"|date('Y-m-d') and (activity.start|date('H:i') > "now"|date('H:i')) or activity.start is null)) %}
+            {% if nbPlacesRestantes > 0 or activity.openToAll %}
+                <div data-controller="confirm">
+                    {% if app.user and 'ROLE_ADMIN' in app.user.roles %}
+                        <a href="{{ path('app_activity_register_admin', {'id': activity.id}) }}" class="block w-fit px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition cursor-pointer">
+                            <i class="fa-solid fa-user-plus"></i> Inscrire un participant
+                        </a>
+                    {% elseif app.user %}
+                        <button data-action="click->confirm#openModal" class="block w-fit px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition cursor-pointer">
+                                Inscrire un chien <i class="fa-solid fa-paw"></i>
+                        </button>
+                        <div class="hidden fixed inset-0 flex items-center justify-center z-50" data-confirm-target="modal">
+                            <form action="{{ path('app_activity_register', {'id': activity.id}) }}" method="post" class="bg-white p-6 rounded-lg shadow-lg shadow-sky-500">
+                                <p class="mb-4 text-center"><strong>{{ activity.service.name }} du {{ activity.date|format_datetime(pattern='d MMMM yyyy', locale="fr") }}</strong></p>
+                                <label for="dog" class="mb-4">Choisissez un chien à inscrire :</label>
+                                <select id="dog" name="dog" class="w-full px-3 py-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-sky-500">
+                                    {% if user.dogs|length > 0 %}
+                                        {% for dog in user.dogs %}
+                                            <option value="{{ dog.id }}">{{ dog.name }}</option>
+                                        {% endfor %}
+                                    {% else %}
+                                        <option value="">Vous n'avez pas de chien enregistré. Veuillez en ajouter un dans votre profil avant de vous inscrire à une activité.</option>
+                                    {% endif %}
+                                </select>
+                                <div class="flex justify-center gap-4">
+                                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition cursor-pointer">Valider</button>
+                                    <button type="button" data-action="click->confirm#cancel" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition cursor-pointer">Annuler</button>
+                                </div>
+                            </form>
+                        </div>
+                    {% else %}
+                        <a href="{{ path('app_login') }}" class="block w-fit px-4 py-2 bg-[#7a96a1] text-white text-shadow-md text-shadow-black rounded-full shadow-md hover:bg-[#6b8490] transition">
+                            Se connecter pour s'inscrire <i class="fa-solid fa-paw"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+
+
+    <div data-controller="list" class="mt-10 max-w-3xl mx-auto bg-sky-100 p-6 rounded-lg shadow-md shadow-sky-500">
+        <h2 class="text-lg font-semibold mb-4">Objectif de l'activité : {{ activity.service.name }}</h2>
+        <p class="text-sm text-gray-700">{{ activity.service.description|raw }}</p>
+    </div>
+</section>
+{% endblock %}

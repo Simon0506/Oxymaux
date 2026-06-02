@@ -5,24 +5,29 @@
 {% block body %}
 
 <section class=" mx-auto mt-10 px-4">
-    <h1 class="text-4xl text-center mt-20">Mes tarifs</h1>
+    <h1 class="text-4xl text-center mt-20 font-semibold">Mes tarifs</h1>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-6 mt-10 max-w-7xl mx-auto">
-        <div class="bg-lime-100 bg-opacity-80 rounded-lg shadow-lg py-6 flex flex-col items-center">
-            <h3 class="text-xl text-center mb-4 underline underline-offset-4"><i class="fa-solid fa-dog"></i><span class="ml-4">Éducation canine</span></h3>
-            <p class="font-extralight text-center">Séances individuelles à partir de 50€</p>
-        </div>
-        <div class="bg-red-100 bg-opacity-80 rounded-lg shadow-lg py-6 flex flex-col items-center">
-            <h3 class="text-xl text-center mb-4 underline underline-offset-4"><i class="fa-solid fa-hand-holding-heart"></i><span class="ml-4">Médiation animale</span></h3>
-            <p class="font-extralight text-center">Séances individuelles à partir de 60€</p>
-        </div>
-        <div class="bg-indigo-100 bg-opacity-80 rounded-lg shadow-lg py-6 flex flex-col items-center">
-            <h3 class="text-xl text-center mb-4 underline underline-offset-4"><i class="fa-solid fa-chalkboard-teacher"></i><span class="ml-4">Ateliers thématiques</span></h3>
-            <p class="font-extralight text-center">Ateliers à partir de 30€ par personne</p>
-        </div>
-        <div class="bg-yellow-100 bg-opacity-80 rounded-lg shadow-lg py-6 flex flex-col items-center">
-            <h3 class="text-xl text-center mb-4 underline underline-offset-4"><i class="fa-solid fa-user-check"></i><span class="ml-4">Consultations personnalisées</span></h3>
-            <p class="font-extralight text-center">Consultations à partir de 70€</p>
-        </div>
+        {% for service in services %}
+            <div class="bg-sky-100 bg-opacity-80 rounded-lg shadow-lg py-6 flex flex-col items-center relative">
+            {% if app.user and is_granted('ROLE_ADMIN') %}
+                <a href="{{ path('app_services_edit', {'id': service.id}) }}" class="absolute z-10 -right-1 -top-1 bg-white p-2 rounded shadow-md"><i class="fa-solid fa-pen"></i></a>
+            {% endif %}
+                <h3 class="text-2xl text-center mb-4 underline underline-offset-4"><span class="ml-4 font-semibold">{{ service.name }}</span></h3>
+                {% if tarifsByService[service.id]|length > 0 %}
+                    {% for tarif in tarifsByService[service.id] %}
+                        <div class="flex flex-col items-center mb-4 w-full">
+                            <p class="text-center text-xl">{{ tarif.name }} : <strong>{{ tarif.price }}€</strong></p>
+                            {% if tarif.comment %}
+                                <p class="text-center text-gray-600">{{ tarif.comment }}</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-center text-gray-600">Sur devis. Me contacter pour connaitre les tarifs.</p>
+                    <a href="{{ path('app_contact') }}" class="mt-4 inline-block px-4 py-2 bg-sky-500 text-white rounded hover:bg-sky-600 transition">Me contacter</a>
+                {% endif %}
+            </div>
+        {% endfor %}
     </div>
 </section>
 {% endblock %}

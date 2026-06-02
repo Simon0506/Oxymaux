@@ -22,8 +22,10 @@
     },
     "dependencies": {
         "@tailwindcss/postcss": "^4.2.4",
+        "html2canvas": "^1.4.1",
         "postcss": "^8.5.14",
         "postcss-loader": "^8.2.1",
+        "sortablejs": "^1.15.7",
         "tailwindcss": "^4.2.4"
     }
 }
