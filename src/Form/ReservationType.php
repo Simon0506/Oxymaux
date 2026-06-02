@@ -22,6 +22,7 @@ class ReservationType extends AbstractType
             ->add('dog', EntityType::class, [
                 'class' => Dog::class,
                 'choice_label' => $fullNameCallback,
+                'placeholder' => 'Sélectionnez un chien',
                 'query_builder' => function (EntityRepository $er) {
                     return $er->createQueryBuilder('d')
                         ->leftJoin('d.user', 'u')
