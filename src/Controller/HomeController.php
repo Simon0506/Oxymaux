@@ -15,7 +15,7 @@ use App\Repository\PartnerRepository;
 use App\Repository\ReservationRepository;
 use App\Repository\ServiceRepository;
 use App\Repository\UserRepository;
-use App\Service\ActivityGoogleSyncService;
+use App\Service\AccountDeletionService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormError;
@@ -229,95 +229,38 @@ final class HomeController extends AbstractController
         ]);
     }
 
-    #[Route('/delete-account', name: 'app_delete_account', methods: ['POST'])] // On force la méthode POST
+    #[Route('/delete-account', name: 'app_delete_account', methods: ['POST'])]
     #[IsGranted('ROLE_USER')]
     public function deleteAccount(
-        EntityManagerInterface $em,
         Request $request,
         TokenStorageInterface $tokenStorage,
-        ActivityGoogleSyncService $activityGoogleSyncService,
-        MailerInterface $mailer
+        AccountDeletionService $accountDeletionService
     ): Response {
         $user = $this->getUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
 
-        // 1. Validation du jeton CSRF pour la sécurité
+        // 1. Validation du jeton CSRF de sécurité
         $submittedToken = $request->request->get('_token');
         if (!$this->isCsrfTokenValid('delete_account_' . $user->getId(), $submittedToken)) {
             throw new InvalidCsrfTokenException('Le jeton de sécurité a expiré, veuillez réessayer.');
         }
 
-        $choice = $request->request->get('reservations');
-        $textChoiceForEmail = null;
-        if ($choice === 'delete') {
-            $textChoiceForEmail = 'Annuler les inscriptions aux activités futures.';
-        } elseif ($choice === 'keep') {
-            $textChoiceForEmail = 'Conserver les inscriptions aux activités futures.';
+        // Sécurité : valeur par défaut sur 'keep' si le champ est manquant
+        $choice = $request->request->get('reservations', 'keep');
+
+        try {
+            // 2. Exécution de la suppression via le Service (isAutomatic = false)
+            $accountDeletionService->deleteAccount($user, $choice, false);
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Une erreur est survenue lors de la synchronisation. Veuillez retenter la suppression de votre compte. Si le problème persiste, contactez l\'administrateur.');
+            return $this->redirectToRoute('app_account');
         }
 
-        $activitiesToSync = [];
-        foreach ($user->getDogs() as $dog) {
-            $reservations = $dog->getReservations();
-
-            $reservationsValidatedAndFuture = array_filter($reservations->toArray(), function (Reservation $reservation) {
-                // Utilisation de la constante native de ton entité, ou ajustement selon ton modèle
-                return $reservation->getStatus() === Reservation::STATUS_VALIDATED
-                    && $reservation->getActivity()->getDate() >= new \DateTime();
-            });
-
-            foreach ($reservations as $reservation) {
-                // On détache le chien du client qui va être supprimé
-                $reservation->setDog(null);
-
-                // CONFORMITÉ RGPD : On remplace par une chaîne STRICTEMENT anonyme.
-                // L'admin sait que c'était pour tel type de chien, mais l'identité est effacée.
-                $reservation->setName($dog->getFullName() . ' - Propriétaire : ' . $user->getFirstName() . ' ' . $user->getLastName() . ' (Compte supprimé)');
-
-                // Si l'utilisateur a choisi de supprimer les réservations validées et futures, on les annule
-                if ($choice === 'delete' && in_array($reservation, $reservationsValidatedAndFuture)) {
-                    $reservation->setStatus(Reservation::STATUS_CANCELLED);
-                    if (!in_array($reservation->getActivity(), $activitiesToSync)) {
-                        $activitiesToSync[] = $reservation->getActivity();
-                    }
-                }
-                $em->persist($reservation);
-            }
-        }
-
-        if ($activitiesToSync) {
-            foreach ($activitiesToSync as $activity) {
-                try {
-                    $activityGoogleSyncService->syncUpdate($activity);
-                } catch (\Exception $e) {
-                    $this->addFlash('error', 'Une erreur est survenue. Veuillez retenter la suppression de votre compte. Si le problème persiste, contactez l\'administrateur.');
-                    return $this->redirectToRoute('app_account');
-                }
-            }
-        }
-
-        $mailToUser = new Email();
-        $mailToUser->from('oxymaux@gmail.com');
-        $mailToUser->to($user->getEmail());
-        $mailToUser->subject('Confirmation de suppression de votre compte');
-        $mailToUser->text("Bonjour " . $user->getFirstName() . ",\n\nVotre compte a été supprimé avec succès. Nous sommes désolés de vous voir partir !\n\nVous avez choisi de :\n" . $textChoiceForEmail . "\n\nSi toutefois vous changez d'avis, n'hésitez pas à nous contacter.\n\nCordialement,\nL'équipe Oxymaux");
-        $mailer->send($mailToUser);
-
-        $mailToAdmin = new Email();
-        $mailToAdmin->from('oxymaux@gmail.com');
-        $mailToAdmin->to('oxymaux@gmail.com');
-        $mailToAdmin->subject('Un utilisateur a supprimé son compte');
-        $mailToAdmin->text("L'utilisateur " . $user->getFirstName() . " " . $user->getLastName() . " a supprimé son compte.\n\nIl a choisi de :\n" . $textChoiceForEmail . "\n\nGoogle Agenda a été mis à jour en conséquence.");
-        $mailer->send($mailToAdmin);
-
-        // 2. Déconnexion forcée de l'utilisateur de la session courante
+        // 3. Déconnexion forcée de l'utilisateur de la session courante
         $tokenStorage->setToken(null);
         $request->getSession()->invalidate();
-
-        // 3. Suppression effective en base de données
-        $em->remove($user);
-        $em->flush();
 
         $this->addFlash('success', 'Votre compte a été supprimé avec succès. Nous sommes désolés de vous voir partir !');
         return $this->redirectToRoute('app_home');

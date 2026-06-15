@@ -2,6 +2,8 @@
 
 namespace App\Security;
 
+use App\Entity\User;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,13 +17,23 @@ class AuthenticationSuccessHandler implements AuthenticationSuccessHandlerInterf
     use TargetPathTrait;
 
     public function __construct(
-        private UrlGeneratorInterface $urlGenerator
+        private UrlGeneratorInterface $urlGenerator,
+        private EntityManagerInterface $em
     ) {}
 
     public function onAuthenticationSuccess(
         Request $request,
         TokenInterface $token
     ): ?Response {
+
+        $user = $token->getUser();
+        if ($user instanceof User) {
+            // On stocke la date de dernière connexion
+            $user->setLastLoginAt(new \DateTimeImmutable());
+            // On réinitialise la date d'avertissement pour la suppression automatique
+            $user->setWarnedForDeletionAt(null);
+            $this->em->flush();
+        }
 
         // Cas d'une page sécurisée
         if ($targetPath = $this->getTargetPath(

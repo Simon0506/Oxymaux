@@ -65,6 +65,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $city = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $lastLoginAt = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $warnedForDeletionAt = null;
+
     public function __construct()
     {
         $this->dogs = new ArrayCollection();
@@ -278,6 +284,30 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setCity(string $city): static
     {
         $this->city = $city;
+
+        return $this;
+    }
+
+    public function getLastLoginAt(): ?\DateTimeImmutable
+    {
+        return $this->lastLoginAt;
+    }
+
+    public function setLastLoginAt(?\DateTimeImmutable $lastLoginAt): static
+    {
+        $this->lastLoginAt = $lastLoginAt;
+
+        return $this;
+    }
+
+    public function getWarnedForDeletionAt(): ?\DateTimeImmutable
+    {
+        return $this->warnedForDeletionAt;
+    }
+
+    public function setWarnedForDeletionAt(?\DateTimeImmutable $warnedForDeletionAt): static
+    {
+        $this->warnedForDeletionAt = $warnedForDeletionAt;
 
         return $this;
     }
