@@ -15,6 +15,7 @@ use App\Repository\PartnerRepository;
 use App\Repository\ReservationRepository;
 use App\Repository\ServiceRepository;
 use App\Repository\UserRepository;
+use App\Service\ActivityGoogleSyncService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormError;
@@ -26,6 +27,8 @@ use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Core\Exception\InvalidCsrfTokenException;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 final class HomeController extends AbstractController
@@ -121,8 +124,9 @@ final class HomeController extends AbstractController
     }
 
     #[Route('/contact', name: 'app_contact', methods: ['GET', 'POST'])]
-    public function contact(Request $request, MailerInterface $mailer): Response
+    public function contact(UserRepository $userRepository, Request $request, MailerInterface $mailer): Response
     {
+        $admin = $userRepository->findAdmin();
         $name = $request->request->get('name');
         $email = $request->request->get('email');
         $subject = $request->request->get('subject');
@@ -131,14 +135,16 @@ final class HomeController extends AbstractController
         if ($name && $email && $subject && $message) {
             $mail = new Email();
             $mail->from($email);
-            $mail->to('contact@oxymaux.fr');
+            $mail->to('oxymaux@gmail.com');
             $mail->subject('Nouveau message de contact : ' . $subject);
             $mail->text("Vous avez reçu un nouveau message de contact.\n\nNom : $name\nEmail : $email\nSujet : $subject\nMessage : $message");
             $mailer->send($mail);
             $this->addFlash('success', 'Votre message a été envoyé avec succès !');
             return $this->redirectToRoute('app_contact');
         }
-        return $this->render('home/contact.html.twig');
+        return $this->render('home/contact.html.twig', [
+            'admin' => $admin,
+        ]);
     }
 
     #[Route('/account', name: 'app_account')]
@@ -221,6 +227,100 @@ final class HomeController extends AbstractController
             'profileForm' => $profileForm->createView(),
             'dogForm' => $dogForm->createView(),
         ]);
+    }
+
+    #[Route('/delete-account', name: 'app_delete_account', methods: ['POST'])] // On force la méthode POST
+    #[IsGranted('ROLE_USER')]
+    public function deleteAccount(
+        EntityManagerInterface $em,
+        Request $request,
+        TokenStorageInterface $tokenStorage,
+        ActivityGoogleSyncService $activityGoogleSyncService,
+        MailerInterface $mailer
+    ): Response {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        // 1. Validation du jeton CSRF pour la sécurité
+        $submittedToken = $request->request->get('_token');
+        if (!$this->isCsrfTokenValid('delete_account_' . $user->getId(), $submittedToken)) {
+            throw new InvalidCsrfTokenException('Le jeton de sécurité a expiré, veuillez réessayer.');
+        }
+
+        $choice = $request->request->get('reservations');
+        $textChoiceForEmail = null;
+        if ($choice === 'delete') {
+            $textChoiceForEmail = 'Annuler les inscriptions aux activités futures.';
+        } elseif ($choice === 'keep') {
+            $textChoiceForEmail = 'Conserver les inscriptions aux activités futures.';
+        }
+
+        $activitiesToSync = [];
+        foreach ($user->getDogs() as $dog) {
+            $reservations = $dog->getReservations();
+
+            $reservationsValidatedAndFuture = array_filter($reservations->toArray(), function (Reservation $reservation) {
+                // Utilisation de la constante native de ton entité, ou ajustement selon ton modèle
+                return $reservation->getStatus() === Reservation::STATUS_VALIDATED
+                    && $reservation->getActivity()->getDate() >= new \DateTime();
+            });
+
+            foreach ($reservations as $reservation) {
+                // On détache le chien du client qui va être supprimé
+                $reservation->setDog(null);
+
+                // CONFORMITÉ RGPD : On remplace par une chaîne STRICTEMENT anonyme.
+                // L'admin sait que c'était pour tel type de chien, mais l'identité est effacée.
+                $reservation->setName($dog->getFullName() . ' - Propriétaire : ' . $user->getFirstName() . ' ' . $user->getLastName() . ' (Compte supprimé)');
+
+                // Si l'utilisateur a choisi de supprimer les réservations validées et futures, on les annule
+                if ($choice === 'delete' && in_array($reservation, $reservationsValidatedAndFuture)) {
+                    $reservation->setStatus(Reservation::STATUS_CANCELLED);
+                    if (!in_array($reservation->getActivity(), $activitiesToSync)) {
+                        $activitiesToSync[] = $reservation->getActivity();
+                    }
+                }
+                $em->persist($reservation);
+            }
+        }
+
+        if ($activitiesToSync) {
+            foreach ($activitiesToSync as $activity) {
+                try {
+                    $activityGoogleSyncService->syncUpdate($activity);
+                } catch (\Exception $e) {
+                    $this->addFlash('error', 'Une erreur est survenue. Veuillez retenter la suppression de votre compte. Si le problème persiste, contactez l\'administrateur.');
+                    return $this->redirectToRoute('app_account');
+                }
+            }
+        }
+
+        $mailToUser = new Email();
+        $mailToUser->from('oxymaux@gmail.com');
+        $mailToUser->to($user->getEmail());
+        $mailToUser->subject('Confirmation de suppression de votre compte');
+        $mailToUser->text("Bonjour " . $user->getFirstName() . ",\n\nVotre compte a été supprimé avec succès. Nous sommes désolés de vous voir partir !\n\nVous avez choisi de :\n" . $textChoiceForEmail . "\n\nSi toutefois vous changez d'avis, n'hésitez pas à nous contacter.\n\nCordialement,\nL'équipe Oxymaux");
+        $mailer->send($mailToUser);
+
+        $mailToAdmin = new Email();
+        $mailToAdmin->from('oxymaux@gmail.com');
+        $mailToAdmin->to('oxymaux@gmail.com');
+        $mailToAdmin->subject('Un utilisateur a supprimé son compte');
+        $mailToAdmin->text("L'utilisateur " . $user->getFirstName() . " " . $user->getLastName() . " a supprimé son compte.\n\nIl a choisi de :\n" . $textChoiceForEmail . "\n\nGoogle Agenda a été mis à jour en conséquence.");
+        $mailer->send($mailToAdmin);
+
+        // 2. Déconnexion forcée de l'utilisateur de la session courante
+        $tokenStorage->setToken(null);
+        $request->getSession()->invalidate();
+
+        // 3. Suppression effective en base de données
+        $em->remove($user);
+        $em->flush();
+
+        $this->addFlash('success', 'Votre compte a été supprimé avec succès. Nous sommes désolés de vous voir partir !');
+        return $this->redirectToRoute('app_home');
     }
 
     #[Route('/dog-edit/{id}', name: 'app_dog_edit', methods: ['POST'])]

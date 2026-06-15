@@ -14,6 +14,7 @@ class Reservation
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'reservations')]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')] // <-- Ultra important !
     private ?Dog $dog = null;
 
     #[ORM\ManyToOne(inversedBy: 'reservations')]
@@ -28,6 +29,9 @@ class Reservation
 
     #[ORM\Column]
     private ?string $status = null;
+
+    #[ORM\Column]
+    private ?bool $reminderSent = false;
 
     public const STATUS_PENDING = 'en attente';
     public const STATUS_VALIDATED = 'validée';
@@ -95,6 +99,18 @@ class Reservation
     public function setCreatedAt(\DateTimeImmutable $createdAt): static
     {
         $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    public function isReminderSent(): ?bool
+    {
+        return $this->reminderSent;
+    }
+
+    public function setReminderSent(bool $reminderSent): static
+    {
+        $this->reminderSent = $reminderSent;
 
         return $this;
     }

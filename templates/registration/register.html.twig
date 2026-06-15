@@ -10,7 +10,16 @@
 
         <h1 class="text-4xl text-center mt-20 font-semibold">S'inscrire</h1>
 
-        {{ form_errors(registrationForm) }}
+        {% if registrationForm.vars.errors|length > 0 %}
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+                {{ form_errors(registrationForm) }}
+            </div>
+        {% endif %}
+        {% if registrationForm.plainPassword.vars.errors|length > 0 %}
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+                {{ form_errors(registrationForm.plainPassword) }}
+            </div>
+        {% endif %}
 
         {{ form_start(registrationForm, {'attr': {'class': 'bg-sky-100 p-4 rounded-xl space-y-4 mt-10 flex flex-col items-center w-full'}}) }}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
