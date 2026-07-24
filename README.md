@@ -20,28 +20,28 @@ Oxymaux est une application web conçue pour la gestion et la présentation d'un
 
 ## 🛠️ Stack Technique
 
-* **Back-end :** [Symfony](https://symfony.com/) (PHP)
+* **Back-end :** Symfony (PHP)
 * **ORM :** Doctrine
-* **Front-end :** Twig, [Tailwind CSS](https://tailwindcss.com/), JavaScript (Stimulus)
+* **Front-end :** Twig, Tailwind CSS, JavaScript (Stimulus)
 * **Icônes :** FontAwesome
 * **Export d'image :** HTML2Canvas
-* **Base de données :** MySQL / MariaDB
+* **Base de données :** MySQL
 
 ---
 
 ## ⚙️ Installation & Configuration en Local
 
 ### Prérequis
-* PHP 8.1+
+* PHP 8.3+
 * Composer
-* Node.js & NPM / Yarn (si compilation des assets)
-* Un serveur de base de données (MySQL / MariaDB)
+* Node.js & NPM
+* Un serveur de base de données (MySQL)
 
 ### Étapes d'installation
 
 1. **Cloner le projet :**
    ```bash
-   git clone https://github.com/votre-compte/oxymaux.git
+   git clone https://github.com/Simon0506/Oxymaux.git
    cd oxymaux
    ```
 
@@ -75,7 +75,7 @@ Oxymaux est une application web conçue pour la gestion et la présentation d'un
    ```bash
    symfony server:start
    ```
-   Rendez-vous sur `[http://127.0.0.1:8000](http://127.0.0.1:8000)` !
+   Rendez-vous sur `http://127.0.0.1:8000` !
 
 ---
 
