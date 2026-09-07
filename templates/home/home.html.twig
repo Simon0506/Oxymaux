@@ -41,7 +41,7 @@
                     {% endif %}
                     <p class="underline underline-offset-4 text-center w-full">{{ service.name }}</p>
                 </h3>
-                <p class="text-center">{{ service.resume|raw }}</p>
+                <p class="text-center">{{ service.resume|safe_html|raw }}</p>
             </div>
             {% endfor %}
         </div>
@@ -58,7 +58,10 @@
             <span>Ils parlent de nous sur Google ...</span>
             {% if app.user and 'ROLE_ADMIN' in app.user.roles %}
             <div class="flex items-center gap-2 p-3 rounded-full bg-[#7a96a1] hover:bg-[#6b8490] transition duration-300 cursor-pointer">
-                <a href="{{ path('app_google_sync_reviews') }}" class="text-sm font-normal text-white text-shadow-md text-shadow-black" title="Synchroniser les avis Google"><i class="fa-solid fa-arrows-rotate"></i> Nouvelle synchronisation</a>
+                <form method="post" action="{{ path('app_google_sync_reviews') }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('google_sync_reviews') }}">
+                    <button type="submit" class="text-sm font-normal text-white text-shadow-md text-shadow-black cursor-pointer" title="Synchroniser les avis Google"><i class="fa-solid fa-arrows-rotate"></i> Nouvelle synchronisation</button>
+                </form>
             </div>
             {% endif %}
         </h2>
@@ -91,7 +94,7 @@
             {% endfor %}
         </div>
         <div class="flex justify-center mt-6">
-            <a href="https://www.google.com/search?sa=X&sca_esv=b15e692cad2bee86&hl=fr-FR&sxsrf=ANbL-n4zTjUnTZod4DRRP6dBXi2kMvViWA:1778849996342&q=Oxymaux+:+m%C3%A9diation+animal,+comportementaliste+et+%C3%A9ducatrice+canine+Avis&rflfq=1&num=20&stick=H4sIAAAAAAAAAONgkxIyNrQ0Njc2MjA1sjQ1MTUwMzfcwMj4itHLv6IyN7G0QsFKIffwypTMxJLM_DyFxLzM3MQcHYXk_NyC_KKS1NzUvJLEnMziklSF1BIFoLrS5MSSoszkVIVkoNK8VAXHssziRaxUNAwA11dNErMAAAA&rldimm=319373205295450671&tbm=lcl&ved=2ahUKEwjh24_RrLuUAxWjUaQEHdbvBbcQ9fQKegQIUBAG&biw=1920&bih=911&dpr=1#lkt=LocalPoiReviews" target="_blank" class="inline-block mx-auto text-center text-lg text-shadow-md text-shadow-black px-4 py-2 bg-[#7a96a1] text-white rounded-full shadow-md hover:bg-[#6b8490] transition duration-300">Voir tous les avis <i class="fa-solid fa-paw"></i></a>
+            <a href="https://search.google.com/local/reviews?placeid=ChIJz6nkIax7AUgRL8pp9DykbgQ" target="_blank" rel="noopener noreferrer" class="inline-block mx-auto text-center text-lg text-shadow-md text-shadow-black px-4 py-2 bg-[#7a96a1] text-white rounded-full shadow-md hover:bg-[#6b8490] transition duration-300">Voir tous les avis <i class="fa-solid fa-paw"></i></a>
         </div>
     </div>
     {% endif %}

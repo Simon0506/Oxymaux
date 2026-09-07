@@ -139,12 +139,15 @@ final class AnimalController extends AbstractController
         ]);
     }
 
-    #[Route('/animaux/{id}/delete', name: 'app_animaux_delete')]
+    #[Route('/animaux/{id}/delete', name: 'app_animaux_delete', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
-    public function deleteAnimal(AnimalRepository $animalRepository, EntityManagerInterface $em, int $id): Response
+    public function deleteAnimal(Request $request, AnimalRepository $animalRepository, EntityManagerInterface $em, int $id): Response
     {
         $animal = $animalRepository->find($id);
         if ($animal) {
+            if (!$this->isCsrfTokenValid('delete_animal_' . $id, $request->request->get('_token'))) {
+                throw $this->createAccessDeniedException('Le jeton CSRF est invalide.');
+            }
             $em->remove($animal);
             $em->flush();
             $this->addFlash('success', 'L\'animal a été supprimé avec succès.');

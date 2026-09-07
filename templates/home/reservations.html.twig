@@ -14,6 +14,12 @@
                         <div class="flex-1 flex flex-col gap-2">
                             <p class="font-semibold text-lg">{{ activity.service.name }}</p>
                             <p class="text-gray-700 mb-4">{{ activity.fullDate }}</p>
+                            {% if activity.lieu is not empty %}
+                                <p class="text-sm"><span class="underline">Lieu :</span> {{ activity.lieu }}</p>
+                            {% endif %}
+                            {% if activity.comment is not empty %}
+                                <p class="text-sm"><span class="underline">Info :</span> {{ activity.comment }}</p>
+                            {% endif %}
                             {% for reservation in reservations %}
                                 {% if reservation.activity.id == activity.id %}
                                     <div data-controller="confirm" class="flex items-center gap-2">
@@ -23,6 +29,7 @@
                                             </button>
                                             <div class="hidden fixed inset-0 flex items-center justify-center z-50" data-confirm-target="modal">
                                                 <form class="bg-white p-6 rounded-lg shadow-lg shadow-sky-500" method="post" action="{{ path('app_reservation_user_cancel', {'id': reservation.id}) }}">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('cancel_reservation_' ~ reservation.id) }}">
                                                     <p class="mb-4">Êtes-vous sûr de vouloir annuler cette inscription ?</p>
                                                     <label for="reason" class="block text-sm font-medium text-gray-700 mb-2">Raison de l'annulation (optionnel) :</label>
                                                     <textarea id="reason" name="reason" rows="3" class="w-full border border-gray-300 rounded px-2 py-1 text-sm mb-4" placeholder="Merci d'indiquer la raison de l'annulation..."></textarea>
@@ -74,7 +81,7 @@
                         <p class="text-gray-700 mb-4">{{ activity.fullDate }}</p>
                         {% for reservation in reservations %}
                             {% if reservation.activity.id == activity.id %}
-                                <p data-controller="auto-cancel" class="font-semibold">{{ reservation.dog.name }} -
+                                <p data-controller="auto-cancel" data-auto-cancel-token-value="{{ csrf_token('auto_cancel_reservation_' ~ reservation.id) }}" class="font-semibold">{{ reservation.dog.name }} -
                                 {% if reservation.status == 'validée' %}
                                         <span class="text-green-500 font-normal">Réservation validée <i class="fa-solid fa-check"></i></span>
                                 {% elseif reservation.status == 'refusée' %}

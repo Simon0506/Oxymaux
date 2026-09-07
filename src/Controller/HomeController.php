@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\DayOff;
 use App\Entity\Dog;
 use App\Entity\Reservation;
 use App\Entity\User;
@@ -9,6 +10,7 @@ use App\Form\DogType;
 use App\Form\ProfileType;
 use App\Form\UpdatePasswordType;
 use App\Repository\ActivityRepository;
+use App\Repository\DayOffRepository;
 use App\Repository\DogRepository;
 use App\Repository\GoogleReviewRepository;
 use App\Repository\PartnerRepository;
@@ -30,6 +32,8 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Exception\InvalidCsrfTokenException;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Cache\CacheInterface;
+use Symfony\Contracts\Cache\ItemInterface;
 
 final class HomeController extends AbstractController
 {
@@ -53,7 +57,7 @@ final class HomeController extends AbstractController
     }
 
     #[Route('/planning/{month}', name: 'app_planning', requirements: ['month' => '\d{4}-\d{2}'], defaults: ['month' => null])]
-    public function planning(?string $month, ActivityRepository $activityRepository, ServiceRepository $serviceRepository): Response
+    public function planning(?string $month, ActivityRepository $activityRepository, ServiceRepository $serviceRepository, DayOffRepository $dayOffRepository): Response
     {
         // 📅 Mois courant ou mois fourni dans l'URL
         $currentMonth = $month
@@ -79,6 +83,13 @@ final class HomeController extends AbstractController
         $previousMonth = $currentMonth->modify('-1 month');
         $nextMonth = $currentMonth->modify('+1 month');
 
+        // Récupération des jours fériés et jours de repos
+        $dayOffs = $dayOffRepository->findByMonth($currentMonth->format('Y-m'));
+        $typeRepos = DayOff::TYPE_REPOS;
+        $typeConges = DayOff::TYPE_CONGES;
+        $typeFormation = DayOff::TYPE_FORMATION;
+        $typeFerie = DayOff::TYPE_FERIE;
+
         // Activités du mois à afficher
         $activities = $activityRepository->findByMonth($currentMonth->format('Y-m'));
         $services = [];
@@ -90,12 +101,17 @@ final class HomeController extends AbstractController
         }
 
         // Activités réservations complètes
+
         $fullActivities = [];
         foreach ($activities as $activity) {
             $reservations = array_filter($activity->getReservations()->toArray(), function (Reservation $reservation) {
                 return $reservation->getStatus() === Reservation::STATUS_VALIDATED;
             });
-            if ($activity->isOpenToAll() !== null && $activity->getNbPlaces() === count($reservations)) {
+            $nbPlaces = $activity->getNbPlaces();
+            if ($nbPlaces < 0) {
+                $nbPlaces = 0;
+            }
+            if ($activity->isOpenToAll() !== null && $nbPlaces === count($reservations)) {
                 $fullActivities[] = $activity->getId();
             }
         }
@@ -119,32 +135,125 @@ final class HomeController extends AbstractController
             'services' => $services,
             'allServices' => $allServices,
             'upcomingActivities' => $upcomingActivities,
-            'fullActivities' => $fullActivities
+            'fullActivities' => $fullActivities,
+            'dayOffs' => $dayOffs,
+            'typeRepos' => $typeRepos,
+            'typeConges' => $typeConges,
+            'typeFormation' => $typeFormation,
+            'typeFerie' => $typeFerie,
         ]);
     }
 
+    #[Route('/block-date/{day}/{month}/{year}', name: 'app_block_date', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function blockDate(ActivityRepository $activityRepository, Request $request, EntityManagerInterface $em, int $day, int $month, int $year): Response
+    {
+        if (!$this->isCsrfTokenValid('block_date_' . $year . '-' . $month . '-' . $day, $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Le jeton CSRF est invalide.');
+        }
+        $date = \DateTime::createFromFormat('Y-m-d', sprintf('%04d-%02d-%02d', $year, $month, $day));
+        if (!$date) {
+            throw $this->createNotFoundException('Date invalide');
+        }
+
+        $activitiesOnDate = $activityRepository->findBy(['date' => $date, 'canceled' => false]);
+        $type = $request->request->get('type');
+        // Vérifier si la date est déjà bloquée
+        $existingDayOff = $em->getRepository(DayOff::class)->findOneBy(['date' => $date]);
+        if ($type === 'unlock') {
+            if ($existingDayOff) {
+                $em->remove($existingDayOff);
+                $em->flush();
+                $this->addFlash('success', 'La date a été débloquée avec succès !');
+            } else {
+                $this->addFlash('error', 'La date n\'est pas bloquée.');
+            }
+        } else {
+            if ($existingDayOff) {
+                $existingDayOff->setType($type);
+                $em->persist($existingDayOff);
+                $this->addFlash('success', 'Le type de la date a été mis à jour avec succès !');
+            } else {
+                if (!empty($activitiesOnDate)) {
+                    $this->addFlash('error', 'La date ne peut pas être bloquée car il y a des activités prévues ce jour-là. Supprimez d\'abord les activités pour pouvoir bloquer la date.');
+                    return $this->redirectToRoute('app_planning', ['month' => $date->format('Y-m')]);
+                } else {
+                    $dayOff = new DayOff();
+                    $dayOff->setDate($date);
+                    $dayOff->setType($type);
+                    $em->persist($dayOff);
+                    $this->addFlash('success', 'La date a été bloquée avec succès !');
+                }
+            }
+            $em->flush();
+        }
+        return $this->redirectToRoute('app_planning', ['month' => $date->format('Y-m')]);
+    }
+
     #[Route('/contact', name: 'app_contact', methods: ['GET', 'POST'])]
-    public function contact(UserRepository $userRepository, Request $request, MailerInterface $mailer): Response
+    public function contact(UserRepository $userRepository, Request $request, MailerInterface $mailer, CacheInterface $cache): Response
     {
         $admin = $userRepository->findAdmin();
-        $name = $request->request->get('name');
-        $email = $request->request->get('email');
-        $subject = $request->request->get('subject');
-        $message = $request->request->get('message');
+        if (!$request->isMethod('POST')) {
+            return $this->render('home/contact.html.twig', [
+                'admin' => $admin,
+            ]);
+        }
 
-        if ($name && $email && $subject && $message) {
-            $mail = new Email();
-            $mail->from($email);
-            $mail->to('oxymaux@gmail.com');
-            $mail->subject('Nouveau message de contact : ' . $subject);
-            $mail->text("Vous avez reçu un nouveau message de contact.\n\nNom : $name\nEmail : $email\nSujet : $subject\nMessage : $message");
-            $mailer->send($mail);
+        $name = trim((string) $request->request->get('name', ''));
+        $email = trim((string) $request->request->get('email', ''));
+        $subject = (string) $request->request->get('subject', '');
+        $message = trim((string) $request->request->get('message', ''));
+
+        // Vérification du champ "website" pour le honeypot
+        $honeypot = $request->request->get('website');
+        $token = $request->request->get('_csrf_token');
+
+
+        if (!$this->isCsrfTokenValid('contact_form', $token)) {
+            throw new InvalidCsrfTokenException('Le jeton CSRF est invalide. Veuillez réessayer.');
+        }
+        if ($honeypot) {
             $this->addFlash('success', 'Votre message a été envoyé avec succès !');
             return $this->redirectToRoute('app_contact');
         }
-        return $this->render('home/contact.html.twig', [
-            'admin' => $admin,
-        ]);
+
+        $subjects = [
+            'general' => 'Demande générale',
+            'devis' => 'Devis',
+            'autre' => 'Autre question',
+        ];
+        if ($name === '' || strlen($name) > 100 || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 254 || !isset($subjects[$subject]) || $message === '' || strlen($message) > 5000 || preg_match('/[\r\n]/', $email)) {
+            $this->addFlash('error', 'Veuillez vérifier les informations saisies.');
+            return $this->redirectToRoute('app_contact');
+        }
+
+        $now = time();
+        $rateLimitKey = 'contact_form_' . hash('sha256', (string) ($request->getClientIp() ?? 'unknown'));
+        $lastSentAt = $cache->get($rateLimitKey, static function (ItemInterface $item): int {
+            $item->expiresAfter(3600);
+            return 0;
+        });
+        if (is_int($lastSentAt) && $lastSentAt > $now - 60) {
+            $this->addFlash('error', 'Veuillez patienter avant d’envoyer un nouveau message.');
+            return $this->redirectToRoute('app_contact');
+        }
+
+        $cache->delete($rateLimitKey);
+        $cache->get($rateLimitKey, static function (ItemInterface $item) use ($now): int {
+            $item->expiresAfter(3600);
+            return $now;
+        });
+
+        $mail = new Email();
+        $mail->from('contact@oxymaux17.com');
+        $mail->to('contact@oxymaux17.com');
+        $mail->replyTo($email);
+        $mail->subject('Nouveau message de contact : ' . $subjects[$subject]);
+        $mail->text("Vous avez reçu un nouveau message de contact.\n\nNom : $name\nEmail : $email\nSujet : {$subjects[$subject]}\nMessage : $message");
+        $mailer->send($mail);
+        $this->addFlash('success', 'Votre message a été envoyé avec succès !');
+        return $this->redirectToRoute('app_contact');
     }
 
     #[Route('/account', name: 'app_account')]
@@ -361,9 +470,9 @@ final class HomeController extends AbstractController
         return $this->redirectToRoute('app_account');
     }
 
-    #[Route('/dog-delete/{id}', name: 'app_dog_delete')]
+    #[Route('/dog-delete/{id}', name: 'app_dog_delete', methods: ['POST'])]
     #[IsGranted('ROLE_USER')]
-    public function deleteDog(EntityManagerInterface $em, DogRepository $dogRepository, int $id): Response
+    public function deleteDog(Request $request, EntityManagerInterface $em, DogRepository $dogRepository, int $id): Response
     {
         $user = $this->getUser();
         if (!$user instanceof User) {
@@ -377,6 +486,9 @@ final class HomeController extends AbstractController
 
         if ($dog->getUser()->getId() !== $user->getId()) {
             throw $this->createAccessDeniedException('Vous n\'avez pas la permission de supprimer ce chien');
+        }
+        if (!$this->isCsrfTokenValid('delete_dog_' . $id, $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Le jeton CSRF est invalide.');
         }
 
         $em->remove($dog);

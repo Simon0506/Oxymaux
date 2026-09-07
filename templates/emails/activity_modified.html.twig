@@ -12,7 +12,10 @@
     {% elseif activity.end %}
         <li><strong>Heure de fin :</strong> jusqu'à {{ activity.end|date('H:i') }}</li>
     {% endif %}
-    {% if activity.comment %}
+    {% if activity.lieu is not empty %}
+        <li><strong>Lieu :</strong> {{ activity.lieu }}</li>
+    {% endif %}
+    {% if activity.comment is not empty %}
     <li><strong>Informations supplémentaires :</strong> {{ activity.comment }}</li>
     {% endif %}
 </ul>

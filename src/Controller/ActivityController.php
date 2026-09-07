@@ -52,7 +52,7 @@ final class ActivityController extends AbstractController
     // Permet à un administrateur d'ajouter une nouvelle activité
     #[Route('/newActivity', name: 'app_add_activity', methods: ['GET', 'POST'])]
     #[IsGranted('ROLE_ADMIN')]
-    public function addActivity(Request $request, EntityManagerInterface $em): Response
+    public function addActivity(Request $request, EntityManagerInterface $em, \App\Repository\DayOffRepository $dayOffRepository): Response
     {
         $activity = new Activity();
         $date = new \DateTime($request->query->get('date'));
@@ -61,6 +61,23 @@ final class ActivityController extends AbstractController
         }
         $form = $this->createForm(ActivityType::class, $activity);
         $form->handleRequest($request);
+
+        // --- Vérification du jour bloqué (DayOff) ---
+        if ($form->isSubmitted()) {
+            $selectedDate = $form->get('date')->getData();
+            if ($selectedDate instanceof \DateTimeInterface) {
+                $isBlocked = $dayOffRepository->findOneBy(['date' => $selectedDate]);
+
+                if ($isBlocked) {
+                    // On ajoute le message flash d'erreur
+                    $this->addFlash('error', 'Impossible de créer une activité à cette date car elle est actuellement bloquée (' . $isBlocked->getType() . ').');
+
+                    // On réaffiche directement le formulaire initial avec le message flash
+                    return $this->redirectToRoute('app_add_activity', ['date' => $selectedDate->format('Y-m-d')]);
+                }
+            }
+        }
+
         if ($form->isSubmitted() && $form->isValid()) {
             $activity->setGoogleNeedSync(true);
             $em->persist($activity);
@@ -69,7 +86,7 @@ final class ActivityController extends AbstractController
             return $this->redirectToRoute('app_reservations_admin', ['date' => $activity->getDate()->format('Y-m-d')]);
         } elseif ($form->isSubmitted()) {
             $this->addFlash('error', 'Erreur lors de l\'ajout de l\'activité. Veuillez vérifier les données saisies.');
-            return $this->redirectToRoute('app_add_activity');
+            return $this->redirectToRoute('app_add_activity', ['date' => $activity->getDate()->format('Y-m-d')]);
         }
         return $this->render('admin/activity_new.html.twig', [
             'form' => $form->createView(),
@@ -81,12 +98,35 @@ final class ActivityController extends AbstractController
     // Permet à un administrateur de modifier une activité existante, avec envoi d'une notification par email à tous les utilisateurs inscrits à cette activité pour les informer de la modification de l'activité
     #[Route('/activity/{id}/edit', name: 'app_activity_edit', methods: ['GET', 'POST'])]
     #[IsGranted('ROLE_ADMIN')]
-    public function editActivity(ActivityRepository $activityRepository, EntityManagerInterface $em, MailerInterface $mailer, int $id, Request $request): Response
+    public function editActivity(ActivityRepository $activityRepository, \App\Repository\DayOffRepository $dayOffRepository, EntityManagerInterface $em, MailerInterface $mailer, int $id, Request $request): Response
     {
         $activity = $activityRepository->find($id);
+        if (!$activity) {
+            throw $this->createNotFoundException('Activité non trouvée');
+        }
+
         $form = $this->createForm(ActivityType::class, $activity);
         $form->handleRequest($request);
         $oldActivity = clone $activity;
+
+        // --- Vérification du jour bloqué (DayOff) à l'édition ---
+        if ($form->isSubmitted()) {
+            $selectedDate = $form->get('date')->getData();
+            if ($selectedDate instanceof \DateTimeInterface) {
+                $isBlocked = $dayOffRepository->findOneBy(['date' => $selectedDate]);
+
+                if ($isBlocked) {
+                    // On ajoute le message flash d'erreur
+                    $this->addFlash('error', 'Impossible de modifier l\'activité vers cette date car elle est actuellement bloquée (jour de repos, congés, formation ou férié).');
+
+                    // On réaffiche directement le formulaire d'édition actuel avec le message flash
+                    return $this->render('admin/activity_edit.html.twig', [
+                        'form' => $form->createView(),
+                        'activity' => $activity,
+                    ]);
+                }
+            }
+        }
 
         if ($form->isSubmitted() && $form->isValid()) {
             $activity->setGoogleNeedSync(true);
@@ -107,8 +147,8 @@ final class ActivityController extends AbstractController
                     }
                 }
                 $mail = new TemplatedEmail();
-                $mail->from('oxymaux@gmail.com');
-                $mail->to('oxymaux@gmail.com');
+                $mail->from('contact@oxymaux17.com');
+                $mail->to('contact@oxymaux17.com');
                 $mail->bcc(...$emails);
                 $mail->subject('Modification de l\'activité ' . $oldActivity->getService()->getName());
                 $mail->htmlTemplate('emails/activity_modified.html.twig');
@@ -132,13 +172,16 @@ final class ActivityController extends AbstractController
         ]);
     }
 
-    #[Route('/activity/{id}/delete', name: 'app_activity_delete')]
+    #[Route('/activity/{id}/delete', name: 'app_activity_delete', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
     public function deleteActivity(ActivityRepository $activityRepository, EntityManagerInterface $em, ActivityGoogleSyncService $activityGoogleSyncService, MailerInterface $mailer, Request $request, int $id): Response
     {
         $activity = $activityRepository->find($id);
         if (!$activity) {
             throw $this->createNotFoundException('Activité non trouvée');
+        }
+        if (!$this->isCsrfTokenValid('delete_activity_' . $id, $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Le jeton CSRF est invalide.');
         }
 
         $reason = $request->request->get('reason');
@@ -158,9 +201,9 @@ final class ActivityController extends AbstractController
 
         $mail = new TemplatedEmail();
 
-        $mail->from('oxymaux@gmail.com');
+        $mail->from('contact@oxymaux17.com');
 
-        $mail->to('oxymaux@gmail.com');
+        $mail->to('contact@oxymaux17.com');
 
         $mail->bcc(...$emails);
 
@@ -186,13 +229,16 @@ final class ActivityController extends AbstractController
         return $this->redirectToRoute('app_reservations_admin', ['date' => $date]);
     }
 
-    #[Route('/activity/{id}/cancel', name: 'app_activity_cancel')]
+    #[Route('/activity/{id}/cancel', name: 'app_activity_cancel', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
     public function cancelActivity(ActivityRepository $activityRepository, EntityManagerInterface $em,  MailerInterface $mailer, Request $request, int $id): Response
     {
         $activity = $activityRepository->find($id);
         if (!$activity) {
             throw $this->createNotFoundException('Activité non trouvée');
+        }
+        if (!$this->isCsrfTokenValid('cancel_activity_' . $id, $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Le jeton CSRF est invalide.');
         }
 
         $reason = $request->request->get('reason');
@@ -213,9 +259,9 @@ final class ActivityController extends AbstractController
 
         $mail = new TemplatedEmail();
 
-        $mail->from('oxymaux@gmail.com');
+        $mail->from('contact@oxymaux17.com');
 
-        $mail->to('oxymaux@gmail.com');
+        $mail->to('contact@oxymaux17.com');
 
         $mail->bcc(...$emails);
 

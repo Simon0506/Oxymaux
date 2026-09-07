@@ -12,6 +12,7 @@ parameters:
     default_locale: 'fr'
     google_places_api_key: '%env(GOOGLE_PLACES_API_KEY)%'
     google_place_id: '%env(GOOGLE_PLACE_ID)%'
+    maintenance_mode: '%env(bool:MAINTENANCE_MODE)%'
     
 
 services:
@@ -31,3 +32,7 @@ services:
         arguments:
             $googlePlacesApiKey: '%google_places_api_key%'
             $googlePlaceId: '%google_place_id%'
+
+    App\EventListener\MaintenanceListener:
+        arguments:
+            $maintenanceMode: '%maintenance_mode%'

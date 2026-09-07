@@ -36,10 +36,19 @@ export default class extends Controller {
                 'alignleft aligncenter alignright alignjustify | ' +
                 'bullist numlist outdent indent | link image | preview code',
 
+            // 💡 Options de gratuité totale pour masquer les alertes cloud
+            promotion: false,
             branding: false,
+            license_key: 'gpl', 
 
             setup: (editor) => {
                 this.editor = editor;
+                
+                // Optionnel : Forcer la mise à jour du textarea natif quand on tape du texte 
+                // (Très utile pour éviter les formulaires soumis "vides" avec Turbo)
+                editor.on('change', () => {
+                    editor.save();
+                });
             }
         });
     }
@@ -49,6 +58,7 @@ export default class extends Controller {
         if (this.editor) {
             this.editor.remove();
             this.editor = null;
+            this.element.dataset.tinymceInitialized = 'false';
         }
     }
 }

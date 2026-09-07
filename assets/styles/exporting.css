@@ -20,6 +20,10 @@
     background-color: #ffffff !important;
 }
 
+.exporting .bg-zinc-300 {
+    background-color: #e4e4e7 !important;
+}
+
 .exporting .bg-transparent {
     background-color: transparent !important;
 }
@@ -51,6 +55,18 @@
 
 .exporting .text-white {
     color: #ffffff !important;
+}
+
+.exporting .text-pink-500 {
+    color: #ec4899 !important;
+}
+
+.exporting .text-orange-500 {
+    color: #f97316 !important;
+}
+
+.exporting .text-red-500 {
+    color: #ef4444 !important;
 }
 
 /* Borders */
@@ -102,4 +118,13 @@
     box-shadow:
         0 10px 15px -3px rgba(0,0,0,0.1),
         0 4px 6px -2px rgba(0,0,0,0.05) !important;
+}
+
+.exporting .export-badge {
+    /* Assurer que les badges sont bien visibles et alignés */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 20px;
+    padding-bottom: 15px;
 }

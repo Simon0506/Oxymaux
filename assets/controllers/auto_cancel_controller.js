@@ -16,9 +16,8 @@ export default class extends Controller {
         try {
             fetch(`/reservation/${reservationId}/auto-cancel`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `_token=${encodeURIComponent(this.element.dataset.autoCancelTokenValue)}`
             });
         } catch (error) {
             console.error('Erreur lors de l\'annulation automatique de la réservation :', error);

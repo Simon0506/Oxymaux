@@ -56,13 +56,16 @@ final class PriceKmController extends AbstractController
         ]);
     }
 
-    #[Route('/price-km/{id}/delete', name: 'app_price_km_delete')]
+    #[Route('/price-km/{id}/delete', name: 'app_price_km_delete', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
     public function deletePriceKm(Request $request, EntityManagerInterface $em, PriceKmRepository $priceKmRepository, int $id): Response
     {
         $priceKm = $priceKmRepository->find($id);
         if (!$priceKm) {
             throw $this->createNotFoundException('Frais de déplacement non trouvé.');
+        }
+        if (!$this->isCsrfTokenValid('delete_price_km_' . $id, $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Le jeton CSRF est invalide.');
         }
 
         $em->remove($priceKm);

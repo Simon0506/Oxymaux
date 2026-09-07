@@ -49,7 +49,7 @@ class WarnInactiveUsersCommand extends Command
         foreach ($usersToWarn as $user) {
             try {
                 $email = (new Email())
-                    ->from('oxymaux@gmail.com')
+                    ->from('contact@oxymaux17.com')
                     ->to($user->getEmail())
                     ->subject('Votre compte Oxymaux va bientôt expirer')
                     ->text(sprintf(

@@ -42,6 +42,16 @@ class ReservationRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    public function countPending(): int
+    {
+        return (int) $this->createQueryBuilder('r')
+            ->select('COUNT(r.id)')
+            ->andWhere('r.status = :status')
+            ->setParameter('status', Reservation::STATUS_PENDING)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
     public function findReservationsForReminder(): array
     {
         $now = new \DateTime('now', new \DateTimeZone('Europe/Paris')); // Assure-toi d'utiliser le bon fuseau horaire

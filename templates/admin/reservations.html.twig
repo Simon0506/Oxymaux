@@ -9,6 +9,7 @@
         <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-10 max-w-2xl mx-auto rounded text-center">
             <p class="font-bold">Attention : {{ activitiesNeedingSync|length }} activité(s) nécessitent une synchronisation avec Google Agenda.</p>
             <form method="post" action="{{ path('app_google_sync_update') }}" class="mt-4">
+                <input type="hidden" name="_token" value="{{ csrf_token('google_sync_update') }}">
                 <button type="submit" class="px-4 py-2 bg-sky-300 rounded hover:bg-sky-500 transition text-black cursor-pointer">Synchroniser Google Agenda</button>
             </form>
         </div>
@@ -24,6 +25,7 @@
                     Liste des inscrits pour le {{ date|date('d/m/Y') }}
                 {% endif %}
             </h2>
+            {# Formulaire pour changer la date #}
             <form data-controller="date-filter" data-action="change->date-filter#submit" method="get" action="{{ path('app_reservations_admin') }}" class="mb-6">
                 <div class="flex justify-center items-center gap-4 mt-2">
                     <label for="date" class="text-sm text-gray-700">Changer de date :</label>
@@ -33,6 +35,7 @@
                     {% endif %}
                 </div>
             </form>
+            {# Liste des activités de la journée #}
             <div class="w-full flex flex-col items-center gap-6 mx-auto max-w-2xl mt-5">
                 {% if activities|length > 0 %}
                     {% for activity in activities %}
@@ -48,6 +51,7 @@
                                         </button>
                                         <div class="hidden fixed inset-0 flex items-center justify-center z-20" data-confirm-target="modal">
                                             <form class="bg-white p-6 rounded-lg shadow-lg shadow-sky-500" method="post" action="{{ path('app_activity_cancel', {'id': activity.id}) }}">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('cancel_activity_' ~ activity.id) }}">
                                                 <p class="mb-4">Êtes-vous sûr de vouloir annuler cette activité ?</p>
                                                 <label for="reason" class="block text-sm font-medium text-gray-700 mb-2">Raison de l'annulation (optionnel) :</label>
                                                 <textarea id="reason" name="reason" rows="3" class="w-full border border-gray-300 rounded px-2 py-1 text-sm mb-4" placeholder="Ex : L'activité a été annulée pour cause de mauvais temps..."></textarea>
@@ -64,6 +68,7 @@
                                         </button>
                                         <div class="hidden fixed inset-0 flex items-center justify-center z-20" data-confirm-target="modal">
                                             <form class="bg-white p-6 rounded-lg shadow-lg shadow-sky-500" method="post" action="{{ path('app_activity_delete', {'id': activity.id}) }}">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('delete_activity_' ~ activity.id) }}">
                                                 <p class="mb-4">Êtes-vous sûr de vouloir supprimer cette activité ?</p>
                                                 <label for="reason" class="block text-sm font-medium text-gray-700 mb-2">Raison de la suppression (optionnel) :</label>
                                                 <textarea id="reason" name="reason" rows="3" class="w-full border border-gray-300 rounded px-2 py-1 text-sm mb-4" placeholder="Ex : L'activité a été supprimée pour cause d'erreur de planning..."></textarea>
@@ -85,11 +90,23 @@
                                         - à partir de {{ activity.start|date('H:i') }}
                                     {% endif %}
                                 </h3>
-                                {% if activity.openToAll %}
-                                    <p class="text-blue-500 text-sm mb-4">Ouvert à tous</p>
-                                {% elseif activity.nbPlaces > 0 %}
-                                    <p class="text-blue-500 text-sm mb-4">{{ activity.nbPlaces }} place(s) maximum</p>
-                                {% endif %}
+                                <div class="flex flex-col md:flex-row justify-between items-start gap-2 w-full mb-4">
+                                    <div class="flex flex-col gap-2">
+                                        {% if activity.lieu is not empty %}
+                                            <p class="text-sm"><span class="underline">Lieu :</span> {{ activity.lieu }}</p>
+                                        {% endif %}
+                                        {% if activity.comment is not empty %}
+                                            <p class="text-sm"><span class="underline">Info :</span> {{ activity.comment }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        {% if activity.openToAll %}
+                                            <p class="text-blue-500 text-sm mb-4">Ouvert à tous</p>
+                                        {% elseif activity.nbPlaces > 0 %}
+                                            <p class="text-blue-500 text-sm mb-4">{{ activity.nbPlaces }} place(s) maximum</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
                                 {% set reservationsValides = activity.reservations|filter(reservation => reservation.status == 'validée') %}
                                 {% set reservationsAnnulees = activity.reservations|filter(reservation => reservation.status == 'annulée') %}
                                 {% if reservationsValides|length > 0 or reservationsAnnulees|length > 0 %}
@@ -108,6 +125,7 @@
                                                 </li>
                                                 <div class="hidden fixed inset-0 flex items-center justify-center z-50" data-confirm-target="modal">
                                                     <form class="bg-white p-6 rounded-lg shadow-lg shadow-sky-500" method="post" action="{{ path('app_reservation_cancel', {'id': reservation.id}) }}">
+                                                        <input type="hidden" name="_token" value="{{ csrf_token('cancel_reservation_' ~ reservation.id) }}">
                                                         <p class="mb-4">Êtes-vous sûr de vouloir annuler cette inscription ?</p>
                                                         <p class="mb-4 text-center">
                                                             <strong>
@@ -242,10 +260,11 @@
                                                             {% endif %}
                                                             </strong>
                                                         </p>
-                                                        <div class="flex justify-center gap-4">
-                                                            <a href="{{ path('app_reservation_validate', {'id': reservation.id}) }}" class="px-4 py-2 bg-sky-300 rounded hover:bg-sky-400 transition">Oui, valider</a>
+                                                        <form method="post" action="{{ path('app_reservation_validate', {'id': reservation.id}) }}" class="flex justify-center gap-4">
+                                                            <input type="hidden" name="_token" value="{{ csrf_token('validate_reservation_' ~ reservation.id) }}">
+                                                            <button type="submit" class="px-4 py-2 bg-sky-300 rounded hover:bg-sky-400 transition">Oui, valider</button>
                                                             <button data-action="click->confirm#cancel" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition cursor-pointer">Non, annuler</button>
-                                                        </div>
+                                                        </form>
                                                     </div>
                                                 </div>
                                             </div>
@@ -253,6 +272,7 @@
                                                 <button data-action="click->confirm#openModal" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 transition ml-2 cursor-pointer">Refuser</button>
                                                 <div class="hidden fixed inset-0 flex items-center justify-center z-50" data-confirm-target="modal">
                                                     <form class="bg-white p-6 rounded-lg shadow-lg shadow-sky-500" method="post" action="{{ path('app_reservation_reject', {'id': reservation.id}) }}">
+                                                        <input type="hidden" name="_token" value="{{ csrf_token('reject_reservation_' ~ reservation.id) }}">
                                                         <p class="mb-4">Êtes-vous sûr de vouloir refuser cette inscription ?</p>
                                                         <p class="mb-4 text-center"><strong>
                                                             {% if reservation.dog %}

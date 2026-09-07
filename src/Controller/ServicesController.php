@@ -159,10 +159,13 @@ final class ServicesController extends AbstractController
         ]);
     }
 
-    #[Route('/services/{id}/delete', name: 'app_services_delete')]
+    #[Route('/services/{id}/delete', name: 'app_services_delete', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
-    public function delete(ServiceRepository $serviceRepository, int $id, EntityManagerInterface $em): Response
+    public function delete(ServiceRepository $serviceRepository, Request $request, int $id, EntityManagerInterface $em): Response
     {
+        if (!$this->isCsrfTokenValid('delete_service_' . $id, $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Le jeton CSRF est invalide.');
+        }
         $service = $serviceRepository->find($id);
         if ($service) {
             $em->remove($service);
@@ -178,6 +181,9 @@ final class ServicesController extends AbstractController
     {
         $services = $serviceRepository->sortByPosition();
         if ($request->isMethod('POST')) {
+            if (!$this->isCsrfTokenValid('sort_services', $request->request->get('_token'))) {
+                throw $this->createAccessDeniedException('Le jeton CSRF est invalide.');
+            }
             $positions = $request->request->all('services');
             foreach ($positions as $id => $position) {
                 $service = $serviceRepository->find($id);

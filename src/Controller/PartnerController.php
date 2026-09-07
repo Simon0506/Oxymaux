@@ -90,13 +90,16 @@ final class PartnerController extends AbstractController
         ]);
     }
 
-    #[Route('/partners/{id}/delete', name: 'app_partners_delete')]
+    #[Route('/partners/{id}/delete', name: 'app_partners_delete', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
-    public function deletePartner(EntityManagerInterface $em, PartnerRepository $partnerRepository, int $id): Response
+    public function deletePartner(Request $request, EntityManagerInterface $em, PartnerRepository $partnerRepository, int $id): Response
     {
         $partner = $partnerRepository->find($id);
         if (!$partner) {
             throw $this->createNotFoundException('Partenaire non trouvé');
+        }
+        if (!$this->isCsrfTokenValid('delete_partner_' . $id, $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Le jeton CSRF est invalide.');
         }
         $em->remove($partner);
         $em->flush();

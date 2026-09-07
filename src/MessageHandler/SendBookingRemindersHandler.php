@@ -72,7 +72,7 @@ class SendBookingRemindersHandler
             $activitiesListHtml = '<ul>' . implode('', $group['details']) . '</ul>';
 
             $email = (new Email())
-                ->from('oxymaux@gmail.com')
+                ->from('contact@oxymaux17.com')
                 ->to($user->getEmail())
                 ->subject('Rappel : Vos prochaines séances Oxymaux')
                 ->html(sprintf(

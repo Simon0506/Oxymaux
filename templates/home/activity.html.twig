@@ -5,7 +5,7 @@
 {% block body %}
 
 <section class="max-w-7xl mx-auto mt-10 px-4">
-    <a href="{{ path('app_planning') }}" class="text-gray-600 hover:text-gray-800 transition duration-300">
+    <a href="{{ path('app_planning', {'month': activity.date|date('Y-m')}) }}" class="text-gray-600 hover:text-gray-800 transition duration-300">
         <i class="fa-solid fa-arrow-left"></i> Revenir au planning
     </a>
     <h1 class="text-4xl text-center mt-10 font-semibold">
@@ -40,17 +40,25 @@
                     <p class="text-sky-300 text-2xl font-semibold mt-4">Image à venir</p>
                 </div>
             {% endif %}
-            <div class="flex flex-col justify-center items-center gap-2">
+            <div class="flex flex-col justify-center items-center gap-2 w-full">
                 <p class="text-center text-2xl text-blue-700 font-semibold">
                     {{ activity.service.name }}
                 </p>
-                {% if activity.comment and (activity.openToAll or activity.nbPlaces > 0) %}
-                    <div class="bg-yellow-200 rounded-lg p-6">
-                        <p class="text-center text-sm">
-                            <span class="text-red-500 text-lg"><i class="fa-solid fa-triangle-exclamation"></i></span>
-                            <span>{{ activity.comment }}</span>
-                        </p>
-                    </div>
+                {% if app.user and (activity.lieu is not empty or activity.comment is not empty) and (activity.nbPlaces is null or activity.nbPlaces > 0) %}
+                <div class="bg-sky-100 rounded-lg p-2 w-full flex flex-col items-center gap-4">
+                    {% if activity.lieu is not empty %}
+                        <div class="flex flex-col md:flex-row gap-4 w-full text-sm">
+                            <p class="font-semibold underline">Lieu :</p>
+                            <p>{{ activity.lieu }}</p>
+                        </div>
+                    {% endif %}
+                    {% if activity.comment is not empty %}
+                        <div class="flex flex-col md:flex-row gap-4 w-full text-sm">
+                            <p class="font-semibold underline">Information supplémentaire :</p>
+                            <p>{{ activity.comment }}</p>
+                        </div>
+                    {% endif %}
+                </div>
                 {% endif %}
             </div>
         </div>
@@ -67,6 +75,7 @@
                         </button>
                         <div class="hidden fixed inset-0 flex items-center justify-center z-50" data-confirm-target="modal">
                             <form action="{{ path('app_activity_register', {'id': activity.id}) }}" method="post" class="bg-white p-6 rounded-lg shadow-lg shadow-sky-500">
+                                <input type="hidden" name="_token" value="{{ csrf_token('register_activity_' ~ activity.id) }}">
                                 <p class="mb-4 text-center"><strong>{{ activity.service.name }} du {{ activity.date|format_datetime(pattern='d MMMM yyyy', locale="fr") }}</strong></p>
                                 <label for="dog" class="mb-4">Choisissez un chien à inscrire :</label>
                                 <select id="dog" name="dog" class="w-full px-3 py-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-sky-500">
@@ -97,7 +106,7 @@
 
     <div data-controller="list" class="mt-10 max-w-3xl mx-auto bg-sky-100 p-6 rounded-lg shadow-md shadow-sky-500">
         <h2 class="text-lg font-semibold mb-4">Objectif de l'activité : {{ activity.service.name }}</h2>
-        <p class="text-sm text-gray-700">{{ activity.service.description|raw }}</p>
+        <p class="text-sm text-gray-700">{{ activity.service.description|safe_html|raw }}</p>
     </div>
 </section>
 {% endblock %}

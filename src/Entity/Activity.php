@@ -56,6 +56,9 @@ class Activity
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $reasonCancel = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $lieu = null;
+
     public function __construct()
     {
         $this->reservations = new ArrayCollection();
@@ -239,6 +242,18 @@ class Activity
     public function setReasonCancel(?string $reasonCancel): static
     {
         $this->reasonCancel = $reasonCancel;
+
+        return $this;
+    }
+
+    public function getLieu(): ?string
+    {
+        return $this->lieu;
+    }
+
+    public function setLieu(?string $lieu): static
+    {
+        $this->lieu = $lieu;
 
         return $this;
     }

@@ -15,7 +15,7 @@
         <title>{% block title %}Oxymaux{% endblock %}</title>
         <link rel="icon" href="{{ asset('favicon.ico') }}" />
         <script src="https://kit.fontawesome.com/274d342162.js" crossorigin="anonymous"></script>
-        <script src="https://cdn.tiny.cloud/1/njz04iv33qs0m7g6o93we1eh8h9ztlda4n44cftnk446irc9/tinymce/8/tinymce.min.js" referrerpolicy="origin" crossorigin="anonymous"></script>
+        <script src="https://unpkg.com/tinymce@6/tinymce.min.js" referrerpolicy="origin"></script>
         {% block stylesheets %}
             {{ encore_entry_link_tags('app') }}
         {% endblock %}
@@ -28,6 +28,10 @@
         <img src="{{ asset('images/background2.jpg') }}" alt="Fond Oxymaux" class="fixed inset-0 w-full h-full -z-10 object-cover" />
         <header class="fixed top-0 left-0 z-50 w-full backdrop-blur-lg bg-white/60 font-semibold h-30">
             <nav data-controller="navbar" class="max-w-6xl mx-auto">
+                {% set adminActionCount = 0 %}
+                {% if app.user and 'ROLE_ADMIN' in app.user.roles %}
+                    {% set adminActionCount = admin_action_count() %}
+                {% endif %}
                 <div class="flex items-center justify-between px-4 py-3">
                     <div class="md:hidden flex flex-col items-center">
                         <span class="text-2xl text-sky-300 cursor-pointer" data-navbar-target="menuButton" data-action="click->navbar#toggleMenu">
@@ -59,13 +63,18 @@
                             {% if app.user %}
                                 <button type="button" data-action="click->dropdown#toggle" class="flex items-center gap-2 cursor-pointer hover:text-sky-300 transition-colors">
                                     <i class="fa-solid fa-user"></i>
-                                    {{ app.user.firstname ?? 'Compte' }}
+                                    <span class="relative">
+                                        {{ app.user.firstname ?? 'Compte' }}
+                                        {% if adminActionCount > 0 %}
+                                            <span class="absolute -top-3 -right-5 min-w-5 h-5 px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-xs leading-none" title="{{ adminActionCount }} action(s) à traiter">{{ adminActionCount }}</span>
+                                        {% endif %}
+                                    </span>
                                     <i data-dropdown-target="arrow" class="fa-solid fa-chevron-down text-sm transition-transform duration-300"></i>
                                 </button>
                                 <div data-dropdown-target="menu" class="absolute right-0 mt-2 w-64 bg-white rounded-b-md border border-gray-200 shadow-lg p-4 z-50 text-sm flex flex-col gap-4 items-start pointer-events-none opacity-0 scale-95 transition-all duration-300 ease-out transform origin-top-right">
                                     <a href="{{ path('app_account') }}" class="{% if app.request.attributes.get('_route') == 'app_account' %}text-sky-300 text-shadow-md text-shadow-black{% endif %} hover:text-sky-300">Informations personnelles</a>
                                     {% if 'ROLE_ADMIN' in app.user.roles %}
-                                        <a href="{{ path('app_reservations_admin')}}" class="{% if app.request.attributes.get('_route') == 'app_reservations_admin' %}text-sky-300 text-shadow-md text-shadow-black{% endif %} hover:text-sky-300">Gestion du planning</a>
+                                        <a href="{{ path('app_reservations_admin')}}" class="{% if app.request.attributes.get('_route') == 'app_reservations_admin' %}text-sky-300 text-shadow-md text-shadow-black{% endif %} hover:text-sky-300">Gestion du planning{% if adminActionCount > 0 %} <span class="inline-flex min-w-5 h-5 px-1 items-center justify-center rounded-full bg-red-500 text-white text-xs leading-none align-middle" title="{{ adminActionCount }} action(s) à traiter">{{ adminActionCount }}</span>{% endif %}</a>
                                         <a href="{{ path('app_clients') }}" class="{% if app.request.attributes.get('_route') == 'app_clients' %}text-sky-300 text-shadow-md text-shadow-black{% endif %} hover:text-sky-300">Clients</a>
                                     {% else %}
                                         <a href="{{ path('app_reservations')}}" class="{% if app.request.attributes.get('_route') == 'app_reservations' %}text-sky-300 text-shadow-md text-shadow-black{% endif %} hover:text-sky-300">Réservations</a>
@@ -108,14 +117,19 @@
                             {% if app.user %}
                                 <button type="button" data-action="click->dropdown#toggleAccordion" class="flex items-center gap-2 cursor-pointer py-2">
                                     <i class="fa-solid fa-user"></i>
-                                    {{ app.user.firstname ?? 'Compte' }}
+                                    <span class="relative">
+                                        {{ app.user.firstname ?? 'Compte' }}
+                                        {% if adminActionCount > 0 %}
+                                            <span class="absolute -top-3 -right-5 min-w-5 h-5 px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-xs leading-none" title="{{ adminActionCount }} action(s) à traiter">{{ adminActionCount }}</span>
+                                        {% endif %}
+                                    </span>
                                     <i data-dropdown-target="arrow" class="fa-solid fa-chevron-down text-sm transition-transform duration-300"></i>
                                 </button>
                                 
                                 <div data-dropdown-target="menu" class="w-full flex flex-col items-center gap-3 bg-gray-50 text-base transition-all duration-300 ease-out overflow-hidden" style="height: 0px; opacity: 0;">
                                     <a href="{{ path('app_account') }}" class="{% if app.request.attributes.get('_route') == 'app_account' %}text-sky-300 text-shadow-md text-shadow-black{% endif %} hover:text-sky-300 pt-3">Informations personnelles</a>
                                     {% if 'ROLE_ADMIN' in app.user.roles %}
-                                        <a href="{{ path('app_reservations_admin')}}" class="{% if app.request.attributes.get('_route') == 'app_reservations_admin' %}text-sky-300 text-shadow-md text-shadow-black{% endif %} hover:text-sky-300">Gestion du planning</a>
+                                        <a href="{{ path('app_reservations_admin')}}" class="{% if app.request.attributes.get('_route') == 'app_reservations_admin' %}text-sky-300 text-shadow-md text-shadow-black{% endif %} hover:text-sky-300">Gestion du planning{% if adminActionCount > 0 %} <span class="inline-flex min-w-5 h-5 px-1 items-center justify-center rounded-full bg-red-500 text-white text-xs leading-none align-middle" title="{{ adminActionCount }} action(s) à traiter">{{ adminActionCount }}</span>{% endif %}</a>
                                         <a href="{{ path('app_clients') }}" class="{% if app.request.attributes.get('_route') == 'app_clients' %}text-sky-300 text-shadow-md text-shadow-black{% endif %} hover:text-sky-300">Clients</a>
                                     {% else %}
                                         <a href="{{ path('app_reservations')}}" class="{% if app.request.attributes.get('_route') == 'app_reservations' %}text-sky-300 text-shadow-md text-shadow-black{% endif %} hover:text-sky-300">Réservations</a>

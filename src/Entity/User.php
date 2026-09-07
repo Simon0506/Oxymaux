@@ -6,13 +6,13 @@ use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+// use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
-#[UniqueEntity(fields: ['email'], message: 'There is already an account with this email')]
+// #[UniqueEntity(fields: ['email'], message: 'There is already an account with this email')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -141,14 +141,43 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
-     * Ensure the session doesn't contain actual password hashes by CRC32C-hashing them, as supported since Symfony 7.3.
+     * Sérialisation personnalisée pour sécuriser le hash du mot de passe en session
      */
     public function __serialize(): array
     {
-        $data = (array) $this;
-        $data["\0" . self::class . "\0password"] = hash('crc32c', $this->password);
+        return [
+            'id' => $this->id,
+            'email' => $this->email,
+            'roles' => $this->roles,
+            // On stocke un condensé sécurisé plutôt que le vrai hash en session
+            'password' => hash('crc32c', $this->password),
+            'firstname' => $this->firstname,
+            'lastname' => $this->lastname,
+            'phone' => $this->phone,
+            'isVerified' => $this->isVerified,
+            'address' => $this->address,
+            'postalCode' => $this->postalCode,
+            'city' => $this->city,
+        ];
+    }
 
-        return $data;
+    /**
+     * VITAL : La désérialisation symétrique pour reconstruire proprement l'objet
+     */
+    public function __unserialize(array $data): void
+    {
+        $this->id = $data['id'] ?? null;
+        $this->email = $data['email'] ?? null;
+        $this->roles = $data['roles'] ?? [];
+        // On ne peut pas récupérer le vrai mot de passe depuis la session, seulement le condensé sécurisé
+        $this->password = $data['password'] ?? null;
+        $this->firstname = $data['firstname'] ?? null;
+        $this->lastname = $data['lastname'] ?? null;
+        $this->phone = $data['phone'] ?? null;
+        $this->isVerified = $data['isVerified'] ?? false;
+        $this->address = $data['address'] ?? null;
+        $this->postalCode = $data['postalCode'] ?? null;
+        $this->city = $data['city'] ?? null;
     }
 
     #[\Deprecated]

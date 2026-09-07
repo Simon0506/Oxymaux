@@ -95,7 +95,7 @@ final class ReservationController extends AbstractController
 
 
     // Permet à un utilisateur de s'inscrire à une activité, avec vérification des places disponibles et envoi d'une notification par email à l'administrateur pour validation de la réservation
-    #[Route('/activity/{id}/register', name: 'app_activity_register', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
+    #[Route('/activity/{id}/register', name: 'app_activity_register', requirements: ['id' => '\d+'], methods: ['POST'])]
     #[IsGranted('ROLE_USER')]
     public function registerActivity(int $id, ActivityRepository $activityRepository, ReservationRepository $reservationRepository, DogRepository $dogRepository, Request $request, EntityManagerInterface $em, MailerInterface $mailer): Response
     {
@@ -108,6 +108,13 @@ final class ReservationController extends AbstractController
         $user = $this->getUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
+        }
+        if (!$this->isCsrfTokenValid('register_activity_' . $id, $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Le jeton CSRF est invalide.');
+        }
+        if (!$user->isVerified()) {
+            $this->addFlash('error', 'Veuillez confirmer votre adresse e-mail avant de demander une réservation.');
+            return $this->redirectToRoute('app_activity', ['id' => $id]);
         }
         $dog = $dogRepository->find($request->request->get('dog'));
         if (!$dog || $dog->getUser()->getId() !== $user->getId()) {
@@ -152,8 +159,8 @@ final class ReservationController extends AbstractController
         $em->flush();
 
         $mail = new TemplatedEmail();
-        $mail->from('oxymaux@gmail.com');
-        $mail->to('oxymaux@gmail.com');
+        $mail->from('contact@oxymaux17.com');
+        $mail->to('contact@oxymaux17.com');
         $mail->subject('Nouvelle demande d\'inscription à une activité : ' . $activity->getService()->getName());
         $mail->htmlTemplate('emails/new_reservation.html.twig');
         $mail->context([
@@ -213,7 +220,7 @@ final class ReservationController extends AbstractController
                     $em->persist($existingReservationNotValid);
                     $em->flush();
                     $mail = new TemplatedEmail();
-                    $mail->from('oxymaux@gmail.com');
+                    $mail->from('contact@oxymaux17.com');
                     $mail->to($existingReservationNotValid->getDog()->getUser()->getEmail());
                     $mail->subject('Votre chien ' . $existingReservationNotValid->getDog()->getName() . ' a été inscrit à l\'activité "' . $activity->getService()->getName() . '" !');
                     $mail->htmlTemplate('emails/confirmation_reservation.html.twig');
@@ -233,7 +240,7 @@ final class ReservationController extends AbstractController
             $em->flush();
             if ($reservation->getDog()) {
                 $mail = new TemplatedEmail();
-                $mail->from('oxymaux@gmail.com');
+                $mail->from('contact@oxymaux17.com');
                 $mail->to($reservation->getDog()->getUser()->getEmail());
                 $mail->subject('Votre chien ' . $reservation->getDog()->getName() . ' a été inscrit à l\'activité "' . $activity->getService()->getName() . '" !');
                 $mail->htmlTemplate('emails/confirmation_reservation.html.twig');
@@ -257,20 +264,23 @@ final class ReservationController extends AbstractController
 
 
     // Permet à un administrateur de valider une réservation en attente, avec envoi d'une notification par email à l'utilisateur pour confirmer la validation de sa réservation
-    #[Route('/reservation/{id}/validate', name: 'app_reservation_validate')]
+    #[Route('/reservation/{id}/validate', name: 'app_reservation_validate', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
-    public function validateReservation(ReservationRepository $reservationRepository, EntityManagerInterface $em, MailerInterface $mailer, int $id): Response
+    public function validateReservation(ReservationRepository $reservationRepository, EntityManagerInterface $em, MailerInterface $mailer, Request $request, int $id): Response
     {
         $reservation = $reservationRepository->find($id);
         if (!$reservation) {
             throw $this->createNotFoundException('Réservation non trouvée');
+        }
+        if (!$this->isCsrfTokenValid('validate_reservation_' . $id, $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Le jeton CSRF est invalide.');
         }
         $reservation->setStatus(Reservation::STATUS_VALIDATED);
         $reservation->getActivity()->setGoogleNeedSync(true);
         $em->persist($reservation);
         $em->flush();
         $mail = new TemplatedEmail();
-        $mail->from('oxymaux@gmail.com');
+        $mail->from('contact@oxymaux17.com');
         $mail->to($reservation->getDog()->getUser()->getEmail());
         $mail->subject('Votre réservation pour l\'activité "' . $reservation->getActivity()->getService()->getName() . '" a été validée !');
         $mail->htmlTemplate('emails/confirmation_reservation.html.twig');
@@ -284,7 +294,7 @@ final class ReservationController extends AbstractController
 
 
     // Permet à un administrateur de refuser une réservation en attente, avec envoi d'une notification par email à l'utilisateur pour l'informer du refus de sa réservation et de la raison du refus si elle a été spécifiée
-    #[Route('/reservation/{id}/reject', name: 'app_reservation_reject')]
+    #[Route('/reservation/{id}/reject', name: 'app_reservation_reject', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
     public function rejectReservation(ReservationRepository $reservationRepository, EntityManagerInterface $em, MailerInterface $mailer, Request $request, int $id): Response
     {
@@ -292,12 +302,15 @@ final class ReservationController extends AbstractController
         if (!$reservation) {
             throw $this->createNotFoundException('Réservation non trouvée');
         }
+        if (!$this->isCsrfTokenValid('reject_reservation_' . $id, $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Le jeton CSRF est invalide.');
+        }
         $reservation->setStatus(Reservation::STATUS_REFUSED);
         $em->persist($reservation);
         $em->flush();
         $reason = $request->request->get('reason');
         $mail = new TemplatedEmail();
-        $mail->from('oxymaux@gmail.com');
+        $mail->from('contact@oxymaux17.com');
         $mail->to($reservation->getDog()->getUser()->getEmail());
         $mail->subject('Votre réservation pour l\'activité "' . $reservation->getActivity()->getService()->getName() . '" a été refusée !');
         $mail->htmlTemplate('emails/refus_reservation.html.twig');
@@ -312,13 +325,16 @@ final class ReservationController extends AbstractController
 
 
     // Permet à un administrateur d'annuler une réservation validée, avec envoi d'une notification par email à l'utilisateur pour l'informer de l'annulation de sa réservation et de la raison de l'annulation si elle a été spécifiée
-    #[Route('/reservation/{id}/cancel', name: 'app_reservation_cancel')]
+    #[Route('/reservation/{id}/cancel', name: 'app_reservation_cancel', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
     public function cancelReservation(ReservationRepository $reservationRepository, EntityManagerInterface $em, Request $request, MailerInterface $mailer, int $id): Response
     {
         $reservation = $reservationRepository->find($id);
         if (!$reservation) {
             throw $this->createNotFoundException('Réservation non trouvée');
+        }
+        if (!$this->isCsrfTokenValid('cancel_reservation_' . $id, $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Le jeton CSRF est invalide.');
         }
         $reservation->setStatus(Reservation::STATUS_CANCELLED);
         $reservation->getActivity()->setGoogleNeedSync(true);
@@ -327,7 +343,7 @@ final class ReservationController extends AbstractController
         if ($reservation->getDog()) {
             $reason = $request->request->get('reason');
             $mail = new TemplatedEmail();
-            $mail->from('oxymaux@gmail.com');
+            $mail->from('contact@oxymaux17.com');
             $mail->to($reservation->getDog()->getUser()->getEmail());
             $mail->subject('Votre réservation pour l\'activité "' . $reservation->getActivity()->getService()->getName() . '" a été annulée !');
             $mail->htmlTemplate('emails/annulation_reservation.html.twig');
@@ -343,7 +359,7 @@ final class ReservationController extends AbstractController
 
 
     // Permet à un utilisateur d'annuler sa propre réservation validée, avec envoi d'une notification par email à l'utilisateur pour confirmer l'annulation de sa réservation et de la raison de l'annulation si elle a été spécifiée, et envoi d'une notification à l'administrateur pour l'informer de l'annulation de la réservation par l'utilisateur
-    #[Route('/reservation/{id}/user-cancel', name: 'app_reservation_user_cancel')]
+    #[Route('/reservation/{id}/user-cancel', name: 'app_reservation_user_cancel', methods: ['POST'])]
     #[IsGranted('ROLE_USER')]
     public function userCancelReservation(ReservationRepository $reservationRepository, ActivityGoogleSyncService $activityGoogleSyncService, EntityManagerInterface $em, Request $request, MailerInterface $mailer, int $id): Response
     {
@@ -354,6 +370,9 @@ final class ReservationController extends AbstractController
         $user = $this->getUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
+        }
+        if (!$this->isCsrfTokenValid('cancel_reservation_' . $reservation->getId(), $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Le jeton CSRF est invalide.');
         }
         if ($reservation->getDog()->getUser()->getId() !== $user->getId()) {
             throw $this->createAccessDeniedException('Vous n\'êtes pas autorisé à annuler cette réservation.');
@@ -372,8 +391,8 @@ final class ReservationController extends AbstractController
         // Envoyer une notification à Noémie (gérante d'Oxymaux)
         if ($previousStatus === Reservation::STATUS_VALIDATED) {
             $mailToAdmin = new TemplatedEmail();
-            $mailToAdmin->from('oxymaux@gmail.com');
-            $mailToAdmin->to('oxymaux@gmail.com');
+            $mailToAdmin->from('contact@oxymaux17.com');
+            $mailToAdmin->to('contact@oxymaux17.com');
             $mailToAdmin->subject('Une réservation a été annulée par un utilisateur');
             $mailToAdmin->htmlTemplate('emails/notification_annulation.html.twig');
             $mailToAdmin->context([
@@ -385,7 +404,7 @@ final class ReservationController extends AbstractController
 
         // Envoyer une notification à l'utilisateur pour confirmer l'annulation de sa réservation
         $mailToUser = new TemplatedEmail();
-        $mailToUser->from('oxymaux@gmail.com');
+        $mailToUser->from('contact@oxymaux17.com');
         $mailToUser->to($reservation->getDog()->getUser()->getEmail());
         $mailToUser->subject('Votre réservation pour l\'activité "' . $reservation->getActivity()->getService()->getName() . '" a été annulée !');
         $mailToUser->htmlTemplate('emails/annulation_reservation.html.twig');
@@ -402,11 +421,19 @@ final class ReservationController extends AbstractController
 
     // Permet d'annuler automatiquement une réservation en attente si l'activité associée est passée, sans envoyer de notification à l'utilisateur car la réservation est annulée après la date de l'activité
     #[Route('/reservation/{id}/auto-cancel', name: 'app_reservation_auto_cancel', methods: ['POST'])]
-    public function autoCancelReservation(ReservationRepository $reservationRepository, EntityManagerInterface $em, int $id): Response
+    #[IsGranted('ROLE_USER')]
+    public function autoCancelReservation(ReservationRepository $reservationRepository, EntityManagerInterface $em, Request $request, int $id): Response
     {
         $reservation = $reservationRepository->find($id);
         if (!$reservation) {
             throw $this->createNotFoundException('Réservation non trouvée');
+        }
+        $user = $this->getUser();
+        if (!$user instanceof User || !$reservation->getDog() || $reservation->getDog()->getUser()->getId() !== $user->getId()) {
+            throw $this->createAccessDeniedException('Vous n\'êtes pas autorisé à annuler cette réservation.');
+        }
+        if (!$this->isCsrfTokenValid('auto_cancel_reservation_' . $reservation->getId(), $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Le jeton CSRF est invalide.');
         }
         if ($reservation->getStatus() !== Reservation::STATUS_PENDING) {
             throw $this->createAccessDeniedException('Seules les réservations en attente de validation peuvent être annulées automatiquement.');

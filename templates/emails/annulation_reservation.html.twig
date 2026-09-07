@@ -13,7 +13,10 @@
     {% elseif reservation.activity.start %}
         <li><strong>Heure de début :</strong> {{ reservation.activity.start|date('H:i') }}</li>
     {% endif %}
-    {% if reservation.activity.comment %}
+    {% if reservation.activity.lieu is not empty %}
+        <li><strong>Lieu :</strong> {{ reservation.activity.lieu }}</li>
+    {% endif %}
+    {% if reservation.activity.comment is not empty %}
         <li><strong>Informations supplémentaires :</strong> {{ reservation.activity.comment }}</li>
     {% endif %}
 </ul>

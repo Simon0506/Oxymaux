@@ -34,7 +34,6 @@
 
         <select
             data-upcoming-activity-target="service"
-            data-upcoming-activity-target="service"
             data-action="change->upcoming-activity#updateUpcomingActivity"
             class="px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
@@ -79,7 +78,7 @@
             {% endif %}
 
             {% if currentMonth|date("Y-m") != "now"|date("Y-m") %}
-            <div data-planning-export-target="back" class="flex justify-start mb-4">
+            <div data-planning-export-target="notExported" class="flex justify-start mb-4">
                 <a href="{{ path('app_planning') }}" class="text-blue-700 hover:text-pink-300 transition duration-300">
                     <i class="fa-solid fa-arrow-left"></i> Revenir au mois actuel
                 </a>
@@ -88,7 +87,7 @@
             {# Titre du mois #}
             <div data-planning-export-target="header" class="flex justify-between items-center mb-6">
 
-                <a href="{{ path('app_planning', {'month': previousMonth|date('Y-m')}) }}" class="px-2 py-1 bg-white rounded-lg hover:bg-pink-300 transition duration-300">
+                <a data-planning-export-target="notExported" href="{{ path('app_planning', {'month': previousMonth|date('Y-m')}) }}" class="px-2 py-1 bg-white rounded-lg hover:bg-pink-300 transition duration-300">
                     ← {{ previousMonth|format_datetime(pattern='MMMM', locale="fr")|capitalize }}
                 </a>
 
@@ -96,7 +95,7 @@
                     {{ currentMonth|format_datetime(pattern='MMMM yyyy', locale="fr")|capitalize }}
                 </h2>
 
-                <a href="{{ path('app_planning', {'month': nextMonth|date('Y-m')}) }}" class="px-2 py-1 bg-white rounded-lg hover:bg-pink-300 transition duration-300">
+                <a data-planning-export-target="notExported" href="{{ path('app_planning', {'month': nextMonth|date('Y-m')}) }}" class="px-2 py-1 bg-white rounded-lg hover:bg-pink-300 transition duration-300">
                     {{ nextMonth|format_datetime(pattern='MMMM', locale="fr")|capitalize }} →
                 </a>
 
@@ -127,10 +126,20 @@
 
                 {# Jours du mois #}
                 {% for day in 1.. daysInMonth %}
+                    {% set isBlocked = false %}
+                    {% set blockedType = '' %}
+                    {% for dayOff in dayOffs %}
+                        {% if dayOff.date|date("j") == day %}
+                            {% set isBlocked = true %}
+                            {% set blockedType = dayOff.type %}
+                        {% endif %}
+                    {% endfor %}
 
                     <div class="
                         {% if (day < "now"|date("j") and currentMonth|date("Y-m") == "now"|date("Y-m")) or (currentMonth|date("Y-m") < "now"|date("Y-m")) %}
                         bg-gray-300
+                        {% elseif isBlocked %}
+                        bg-zinc-300
                         {% else %}
                         bg-white
                         {% endif %}
@@ -148,6 +157,7 @@
                         shadow-sm
                         hover:shadow-lg
                         transition
+                        relative
                     ">
 
                         {# Numéro du jour #}
@@ -155,10 +165,96 @@
                             {{ day }}
                         </div>
 
+                        {% if app.user and 'ROLE_ADMIN' in app.user.roles and ((currentMonth|date("Y-m") == "now"|date("Y-m") and day >= "now"|date("j")) or currentMonth|date("Y-m") > "now"|date("Y-m")) %}
+                            <div data-controller="confirm" data-planning-export-target="notExported" class="absolute top-1 right-1 flex-col md:flex items-center gap-1 z-10">
+                                {% if not isBlocked %}
+                                    <a href="{{ path('app_add_activity', {'date': currentMonth|date('Y-m') ~ '-' ~ day}) }}" class="flex text-gray-400 hover:text-blue-500 transition duration-300 cursor-pointer">
+                                        <i class="fa-solid fa-plus"></i>
+                                    </a>
+                                {% endif %}
+                                <button data-action="click->confirm#openModal" class="text-gray-400 hover:text-red-500 transition duration-300 cursor-pointer">
+                                    {% if isBlocked %}
+                                        <i class="fa-solid fa-lock"></i>
+                                    {% else %}
+                                        <i class="fa-solid fa-unlock"></i>
+                                    {% endif %}
+                                </button>
+                                
+                                <div data-confirm-target="modal" class="hidden fixed inset-0 flex items-center justify-center z-50">
+                                    <form action="{{ path('app_block_date', {'day': day, 'month': currentMonth|date('m'), 'year': currentMonth|date('Y')}) }}" method="post" class="bg-white p-6 rounded-lg shadow-lg w-80">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('block_date_' ~ currentMonth|date('Y') ~ '-' ~ currentMonth|date('m') ~ '-' ~ day) }}">
+
+                                        {% if not isBlocked %}
+                                            <h3 class="text-lg font-semibold mb-2">Bloquer la date</h3>
+                                        {% else %}
+                                            <h3 class="text-lg font-semibold mb-2">Débloquer la date ou modifier la raison</h3>
+                                            <p class="text-sm text-gray-600 mb-4">
+                                                La date du {{ day }}/{{ currentMonth|date("m") }}/{{ currentMonth|date("Y") }} est actuellement bloquée pour la raison suivante : 
+                                            </p>
+                                            <p class="text-lg text-gray-800 font-semibold mb-4 text-center">
+                                                {{ blockedType|capitalize }}
+                                            </p>
+                                        {% endif %}
+
+                                        {# Case à cocher pour débloquer #}
+                                        {% if isBlocked %}
+                                            <div class="mb-4 flex items-center gap-2">
+                                                <input 
+                                                    type="checkbox" 
+                                                    id="unlock-{{ day }}" 
+                                                    name="type" 
+                                                    value="unlock" 
+                                                    data-action="change->confirm#toggleUnlock"
+                                                    class="cursor-pointer"
+                                                >
+                                                <label for="unlock-{{ day }}" class="text-sm text-gray-600 cursor-pointer font-medium select-none">
+                                                    Voulez-vous débloquer cette date ?
+                                                </label>
+                                            </div>
+                                        {% endif %}
+
+                                        {# Bloc contenant le select (affiché par défaut) #}
+                                        <div data-confirm-target="reasonWrapper" class="mb-4">
+                                            <label for="block-reason-{{ day }}" class="block text-sm text-gray-600 mb-2">
+                                                Choisissez la raison pour bloquer la date du {{ day }}/{{ currentMonth|date("m") }}/{{ currentMonth|date("Y") }} :
+                                            </label>
+                                            
+                                            <select 
+                                                id="block-reason-{{ day }}" 
+                                                name="type" 
+                                                data-confirm-target="reasonSelect"
+                                                class="w-full mb-4 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-red-500"
+                                            >
+                                                <option value="{{ typeRepos }}" {% if blockedType == typeRepos %}selected{% endif %}>Repos</option>
+                                                <option value="{{ typeConges }}" {% if blockedType == typeConges %}selected{% endif %}>Congés</option>
+                                                <option value="{{ typeFormation }}" {% if blockedType == typeFormation %}selected{% endif %}>Formation</option>
+                                                <option value="{{ typeFerie }}" {% if blockedType == typeFerie %}selected{% endif %}>Férié</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="flex justify-end gap-2">
+                                            <button type="button" data-action="click->confirm#cancel" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition cursor-pointer">Annuler</button>
+                                            <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition cursor-pointer">Valider</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        {# Affichage du type bloqué #}
+                        {% if isBlocked %}
+                            <div class="grid grid-cols-1 grid-rows-1 items-center justify-center h-25 w-full pointer-events-none">
+                                <div class="rotate-90 md:rotate-0 -translate-x-1/4 md:translate-x-0 w-fit mx-auto text-xs md:text-sm font-bold px-3 py-1 {{ blockedType == typeRepos ? 'text-sky-500' : (blockedType == typeConges ? 'text-pink-500' : (blockedType == typeFormation ? 'text-orange-500' : 'text-red-500')) }}">
+                                    {{ blockedType|upper }}
+                                </div>
+                            </div>
+                        {% endif %}
+
                         {# Activités du jour #}
                         {% for activity in activities %}
                             {% if activity.date|date("j") == day %}
-                                <a href="{{ path('app_activity', {'id': activity.id}) }}" class="hidden md:flex flex-col items-center gap-2 mt-3 text-sm border border-sky-300 p-2 rounded-lg h-fit w-full relative">
+                                {# Version Desktop (MD et +) #}
+                                <a href="{{ path('app_activity', {'id': activity.id}) }}" class="hidden md:flex flex-col items-center gap-2 mt-3 text-sm border border-sky-300 p-2 rounded-lg h-fit w-full">
                                     <p class="flex justify-between items-center gap-2 w-full">
                                         {% if activity.start and activity.end %}
                                             {{ activity.start|date("H:i") }} - {{ activity.end|date("H:i") }}
@@ -167,20 +263,34 @@
                                         {% else %}
                                             <span>Horaires à définir</span>
                                         {% endif %}
-                                        <img src="{{ asset('images/' ~ activity.service.logo) }}" alt="{{ activity.service.name }}" class="w-8 h-8 object-cover rounded-full"></p>
-                                    <p>{{ activity.service.name }}</p>
-                                    {% if activity.canceled %}
-                                        <span class="absolute bottom-2 -right-2 z-50 transform -rotate-45 bg-red-500 text-white text-xs px-2 py-1 rounded-full">Annulée</span>
-                                    {% elseif activity.id in fullActivities %}
-                                        <span class="absolute bottom-2 -right-2 z-50 transform -rotate-45 bg-yellow-500 text-black text-xs px-2 py-1 rounded-full">Complet</span>
-                                    {% endif %}
+                                        <img src="{{ asset('images/' ~ activity.service.logo) }}" alt="{{ activity.service.name }}" class="w-8 h-8 object-cover rounded-full">
+                                    </p>
+                                    
+                                    {# Nom de l'activité + unique badge alignés proprement dans le flux #}
+                                    <div class="flex flex-col items-center justify-center w-full gap-2 mt-2">
+                                        {# Le nom de l'activité seul #}
+                                        <p class="text-center font-medium leading-tight w-full">
+                                            {{ activity.service.name }}
+                                        </p>
+                                        
+                                        {# Conteneur du badge converti en table pour forcer le centrage vertical absolu #}
+                                        {% if activity.canceled or activity.id in fullActivities %}
+                                            <div class="flex w-full justify-center">
+                                                <span class="export-badge text-xs px-2 py-0.5 rounded-full {{ activity.canceled ? 'text-white bg-red-500' : 'text-black bg-yellow-500' }}">
+                                                    {{ activity.canceled ? 'Annulée' : 'Complet' }}
+                                                </span>
+                                            </div>
+                                        {% endif %}
+                                    </div>
                                 </a>
+
+                                {# Version Mobile #}
                                 <a href="{{ path('app_activity', {'id': activity.id}) }}" class="md:hidden flex justify-center mt-1 relative">
                                     <img src="{{ asset('images/' ~ activity.service.logo) }}" alt="{{ activity.service.name }}" class="w-8 h-8 object-cover rounded-full">
                                     {% if activity.canceled %}
-                                        <div class="absolute top-0 right-0 z-50 bg-red-500 w-2 h-2 rounded-full"></div>
+                                        <div class="absolute top-0 right-0 z-20 bg-red-500 w-2 h-2 rounded-full"></div>
                                     {% elseif activity.id in fullActivities %}
-                                        <div class="absolute top-0 right-0 z-50 bg-yellow-500 w-2 h-2 rounded-full"></div>
+                                        <div class="absolute top-0 right-0 z-20 bg-yellow-500 w-2 h-2 rounded-full"></div>
                                     {% endif %}
                                 </a>
                             {% endif %}

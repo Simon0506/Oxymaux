@@ -11,6 +11,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use KnpU\OAuth2ClientBundle\Client\ClientRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
@@ -72,9 +73,12 @@ class GoogleController extends AbstractController
     }
 
     #[Route('/google/sync-update', name: 'app_google_sync_update', methods: ['POST'])]
-    public function syncUpdate(EntityManagerInterface $entityManager, ActivityGoogleSyncService $activityGoogleSyncService, ActivityRepository $activityRepository): Response
+    public function syncUpdate(Request $request, EntityManagerInterface $entityManager, ActivityGoogleSyncService $activityGoogleSyncService, ActivityRepository $activityRepository): Response
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        if (!$this->isCsrfTokenValid('google_sync_update', $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Le jeton CSRF est invalide.');
+        }
 
         $activitiesNeedingSync = $activityRepository->findBy(['googleNeedSync' => true]);
 
@@ -119,10 +123,13 @@ class GoogleController extends AbstractController
         return $this->redirectToRoute('app_reservations_admin');
     }
 
-    #[Route('/google/sync-reviews', name: 'app_google_sync_reviews')]
-    public function syncReviews(EntityManagerInterface $entityManager, GoogleReviewsSynchronizer $googleReviewsSynchronizer): Response
+    #[Route('/google/sync-reviews', name: 'app_google_sync_reviews', methods: ['POST'])]
+    public function syncReviews(Request $request, EntityManagerInterface $entityManager, GoogleReviewsSynchronizer $googleReviewsSynchronizer): Response
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        if (!$this->isCsrfTokenValid('google_sync_reviews', $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Le jeton CSRF est invalide.');
+        }
 
         try {
             $googleReviewsSynchronizer->syncReviews();

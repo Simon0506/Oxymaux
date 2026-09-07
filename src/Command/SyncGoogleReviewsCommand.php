@@ -24,7 +24,7 @@ class SyncGoogleReviewsCommand extends Command
         OutputInterface $output
     ): int {
 
-        $this->synchronizer->sync();
+        $this->synchronizer->syncReviews();
 
         $output->writeln('Avis Google synchronisés.');
 

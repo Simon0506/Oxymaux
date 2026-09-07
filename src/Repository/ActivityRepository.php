@@ -47,4 +47,14 @@ class ActivityRepository extends ServiceEntityRepository
             ->getQuery()
             ->getOneOrNullResult();
     }
+
+    public function countNeedingGoogleSync(): int
+    {
+        return (int) $this->createQueryBuilder('a')
+            ->select('COUNT(a.id)')
+            ->andWhere('a.googleNeedSync = :needsSync')
+            ->setParameter('needsSync', true)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 }

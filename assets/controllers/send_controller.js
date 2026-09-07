@@ -9,7 +9,7 @@ export default class extends Controller {
             submitButton.disabled = true;
             submitButton.textContent = 'Envoi en cours...';
             submitButton.classList.add('cursor-not-allowed', 'bg-gray-400');
-            submitButton.classList.remove('bg-sky-500', 'hover:bg-sky-600');
+            submitButton.classList.remove('bg-sky-300', 'hover:bg-sky-400', 'cursor-pointer');
         }
     }
 

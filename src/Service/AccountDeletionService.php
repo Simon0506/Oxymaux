@@ -78,7 +78,7 @@ class AccountDeletionService
     {
         // 1. E-mail à destination de l'utilisateur
         $mailToUser = new Email();
-        $mailToUser->from('oxymaux@gmail.com');
+        $mailToUser->from('contact@oxymaux17.com');
         $mailToUser->to($user->getEmail());
 
         if ($isAutomatic) {
@@ -92,8 +92,8 @@ class AccountDeletionService
 
         // 2. E-mail à destination de l'administrateur (la gérante)
         $mailToAdmin = new Email();
-        $mailToAdmin->from('oxymaux@gmail.com');
-        $mailToAdmin->to('oxymaux@gmail.com');
+        $mailToAdmin->from('contact@oxymaux17.com');
+        $mailToAdmin->to('contact@oxymaux17.com');
 
         if ($isAutomatic) {
             $mailToAdmin->subject('[RGPD] Suppression automatique d\'un compte inactif');
