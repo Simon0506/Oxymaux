@@ -15,6 +15,7 @@ use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use SymfonyCasts\Bundle\ResetPassword\Controller\ResetPasswordControllerTrait;
 use SymfonyCasts\Bundle\ResetPassword\Exception\ResetPasswordExceptionInterface;
@@ -34,12 +35,34 @@ class ResetPasswordController extends AbstractController
      * Display & process form to request a password reset.
      */
     #[Route('', name: 'app_forgot_password_request')]
-    public function request(Request $request, MailerInterface $mailer, TranslatorInterface $translator): Response
+    public function request(Request $request, MailerInterface $mailer, TranslatorInterface $translator, HttpClientInterface $httpClient, string $turnstileSecretKey): Response
     {
         $form = $this->createForm(ResetPasswordRequestFormType::class);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $turnstileToken = (string) $request->request->get('cf-turnstile-response', '');
+            $turnstileValid = false;
+            if ($turnstileToken !== '' && $turnstileSecretKey !== '') {
+                try {
+                    $turnstileResponse = $httpClient->request('POST', 'https://challenges.cloudflare.com/turnstile/v0/siteverify', [
+                        'body' => [
+                            'secret' => $turnstileSecretKey,
+                            'response' => $turnstileToken,
+                            'remoteip' => $request->getClientIp(),
+                        ],
+                    ])->toArray(false);
+                    $turnstileValid = ($turnstileResponse['success'] ?? false) === true;
+                } catch (\Throwable) {
+                    $turnstileValid = false;
+                }
+            }
+
+            if (!$turnstileValid) {
+                $this->addFlash('error', 'La vérification anti-spam a échoué. Veuillez réessayer.');
+                return $this->redirectToRoute('app_forgot_password_request');
+            }
+
             /** @var string $email */
             $email = $form->get('email')->getData();
 
@@ -48,6 +71,7 @@ class ResetPasswordController extends AbstractController
 
         return $this->render('reset_password/request.html.twig', [
             'requestForm' => $form,
+            'turnstile_site_key' => $this->getParameter('turnstile_site_key'),
         ]);
     }
 

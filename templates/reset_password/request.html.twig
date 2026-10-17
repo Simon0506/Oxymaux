@@ -20,7 +20,10 @@
             {{ form_errors(requestForm.email) }}
         </div>
 
+        <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}" data-theme="light"></div>
+
         <button type="submit" class="bg-sky-500 text-white px-4 py-2 rounded cursor-pointer hover:bg-sky-600">Envoyer le lien de réinitialisation</button>
     {{ form_end(requestForm) }}
 </section>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 {% endblock %}

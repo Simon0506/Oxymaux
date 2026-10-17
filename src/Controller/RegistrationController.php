@@ -17,6 +17,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 use SymfonyCasts\Bundle\VerifyEmail\Exception\VerifyEmailExceptionInterface;
 
 class RegistrationController extends AbstractController
@@ -24,13 +25,36 @@ class RegistrationController extends AbstractController
     public function __construct(private EmailVerifier $emailVerifier) {}
 
     #[Route('/register', name: 'app_register')]
-    public function register(Request $request, UserPasswordHasherInterface $userPasswordHasher, EntityManagerInterface $entityManager): Response
+    public function register(Request $request, UserPasswordHasherInterface $userPasswordHasher, EntityManagerInterface $entityManager, HttpClientInterface $httpClient, string $turnstileSecretKey): Response
     {
         $user = new User();
         $form = $this->createForm(RegistrationFormType::class, $user);
         $form->handleRequest($request);
 
+        $turnstileValid = true;
         if ($form->isSubmitted() && $form->isValid()) {
+            $turnstileToken = (string) $request->request->get('cf-turnstile-response', '');
+            $turnstileValid = false;
+            if ($turnstileToken !== '' && $turnstileSecretKey !== '') {
+                try {
+                    $turnstileResponse = $httpClient->request('POST', 'https://challenges.cloudflare.com/turnstile/v0/siteverify', [
+                        'body' => [
+                            'secret' => $turnstileSecretKey,
+                            'response' => $turnstileToken,
+                            'remoteip' => $request->getClientIp(),
+                        ],
+                    ])->toArray(false);
+                    $turnstileValid = ($turnstileResponse['success'] ?? false) === true;
+                } catch (\Throwable) {
+                    $turnstileValid = false;
+                }
+            }
+            if (!$turnstileValid) {
+                $this->addFlash('error', 'La vérification anti-spam a échoué. Veuillez réessayer.');
+            }
+        }
+
+        if ($form->isSubmitted() && $form->isValid() && $turnstileValid) {
             /** @var string $plainPassword */
             $plainPassword = $form->get('plainPassword')->getData();
 
@@ -59,6 +83,7 @@ class RegistrationController extends AbstractController
 
         return $this->render('registration/register.html.twig', [
             'registrationForm' => $form,
+            'turnstile_site_key' => $this->getParameter('turnstile_site_key'),
         ]);
     }
 
@@ -100,7 +125,7 @@ class RegistrationController extends AbstractController
                 throw new \Symfony\Component\Security\Core\Exception\InvalidCsrfTokenException('Le jeton CSRF est invalide.');
             }
 
-            $email = strtolower(trim((string) $request->request->get('email', '')));
+            $email = trim((string) $request->request->get('email', ''));
             $rateLimitKey = 'resend_verification_' . hash('sha256', (string) ($request->getClientIp() ?? 'unknown'));
             $now = time();
             $lastRequestAt = $cache->get($rateLimitKey, static function (ItemInterface $item): int {

@@ -61,7 +61,10 @@
                 <span class="text-sm">J'affirme avoir lu et accepté les termes et conditions de notre <a href="{{ path('app_politique_confidentialite') }}" class="text-blue-500 hover:underline">politique de confidentialité</a>.</span>
             </div>
 
+            <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}" data-theme="light"></div>
+
             <button type="submit" class="bg-sky-500 text-white py-2 px-4 rounded hover:bg-sky-600 cursor-pointer">S'inscrire</button>
         {{ form_end(registrationForm) }}
     </section>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 {% endblock %}
