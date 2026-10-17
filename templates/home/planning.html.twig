@@ -15,40 +15,31 @@
     </div>
     {% endif %}
 
-    {# Prochaine activité #}
-    <div
-        data-controller="upcoming-activity"
-        data-upcoming-activity-activities-value='
-            {
-                {% for serviceId, activity in upcomingActivities %}
-                    "{{ serviceId }}": "{% if activity %}{{ activity.date|format_datetime(pattern='d MMMM yyyy', locale='fr') }} {% else %}{{ activity }}{% endif %}"
-                    {% if not loop.last %},{% endif %}
-                {% endfor %}
-            }
-        '
-        class="flex flex-col md:flex-row items-center justify-center gap-2 my-5 max-w-7xl mx-auto"
-    >
-        <p class="text-center text-blue-700">
-            Prochaine date pour l'activité suivante :
-        </p>
-
-        <select
-            data-upcoming-activity-target="service"
-            data-action="change->upcoming-activity#updateUpcomingActivity"
-            class="px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
+    {# Filtre du planning et prochaine date #}
+    <form method="get" action="{{ path('app_planning', {'month': currentMonth|date('Y-m')}) }}" class="flex flex-col md:flex-row items-center justify-center gap-2 my-5 max-w-7xl mx-auto">
+        <label for="planning-service" class="text-center text-blue-700">Afficher les activités :</label>
+        <select id="planning-service" name="service" onchange="this.form.submit()" class="px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">Toutes</option>
             {% for service in allServices %}
-                <option value="{{ service.id }}">
+                <option value="{{ service.id }}" {% if selectedService and selectedService.id == service.id %}selected{% endif %}>
                     {{ service.name }}
                 </option>
             {% endfor %}
         </select>
+    </form>
+    {% if selectedService %}
+        <p class="text-center text-lg">
+            {% if selectedUpcomingActivity %}
+                Prochaine date le <strong class="text-blue-700">{{ selectedUpcomingActivity.date|format_datetime(pattern='d MMMM yyyy', locale='fr') }}</strong>
+            {% else %}
+                Aucune date à venir pour « {{ selectedService.name }} ».
+            {% endif %}
+        </p>
+    {% endif %}
 
-        <p
-            data-upcoming-activity-target="date"
-            class="text-center text-lg"
-        ></p>
-    </div>
+    {% if selectedService and activities|length == 0 %}
+        <p class="text-center text-gray-600 mb-5">Aucune activité « {{ selectedService.name }} » ce mois-ci.</p>
+    {% endif %}
 
      {# Calendrier #}
 
@@ -79,7 +70,7 @@
 
             {% if currentMonth|date("Y-m") != "now"|date("Y-m") %}
             <div data-planning-export-target="notExported" class="flex justify-start mb-4">
-                <a href="{{ path('app_planning') }}" class="text-blue-700 hover:text-pink-300 transition duration-300">
+                <a href="{{ path('app_planning', {'service': selectedService ? selectedService.id : null}) }}" class="text-blue-700 hover:text-pink-300 transition duration-300">
                     <i class="fa-solid fa-arrow-left"></i> Revenir au mois actuel
                 </a>
             </div>
@@ -87,7 +78,7 @@
             {# Titre du mois #}
             <div data-planning-export-target="header" class="flex justify-between items-center mb-6">
 
-                <a data-planning-export-target="notExported" href="{{ path('app_planning', {'month': previousMonth|date('Y-m')}) }}" class="px-2 py-1 bg-white rounded-lg hover:bg-pink-300 transition duration-300">
+                <a data-planning-export-target="notExported" href="{{ path('app_planning', {'month': previousMonth|date('Y-m'), 'service': selectedService ? selectedService.id : null}) }}" class="px-2 py-1 bg-white rounded-lg hover:bg-pink-300 transition duration-300">
                     ← {{ previousMonth|format_datetime(pattern='MMMM', locale="fr")|capitalize }}
                 </a>
 
@@ -95,7 +86,7 @@
                     {{ currentMonth|format_datetime(pattern='MMMM yyyy', locale="fr")|capitalize }}
                 </h2>
 
-                <a data-planning-export-target="notExported" href="{{ path('app_planning', {'month': nextMonth|date('Y-m')}) }}" class="px-2 py-1 bg-white rounded-lg hover:bg-pink-300 transition duration-300">
+                <a data-planning-export-target="notExported" href="{{ path('app_planning', {'month': nextMonth|date('Y-m'), 'service': selectedService ? selectedService.id : null}) }}" class="px-2 py-1 bg-white rounded-lg hover:bg-pink-300 transition duration-300">
                     {{ nextMonth|format_datetime(pattern='MMMM', locale="fr")|capitalize }} →
                 </a>
 
@@ -126,6 +117,7 @@
 
                 {# Jours du mois #}
                 {% for day in 1.. daysInMonth %}
+                    {% set dayDate = currentMonth|date('Y-m-') ~ '%02d'|format(day) %}
                     {% set isBlocked = false %}
                     {% set blockedType = '' %}
                     {% for dayOff in dayOffs %}
@@ -135,7 +127,7 @@
                         {% endif %}
                     {% endfor %}
 
-                    <div class="
+                    <div data-controller="mobile-day" class="
                         {% if (day < "now"|date("j") and currentMonth|date("Y-m") == "now"|date("Y-m")) or (currentMonth|date("Y-m") < "now"|date("Y-m")) %}
                         bg-gray-300
                         {% elseif isBlocked %}
@@ -161,7 +153,7 @@
                     ">
 
                         {# Numéro du jour #}
-                        <div class="text-lg md:text-xl font-bold text-sky-500">
+                        <div data-action="click->mobile-day#open" class="text-lg md:text-xl font-bold text-sky-500 md:pointer-events-none">
                             {{ day }}
                         </div>
 
@@ -254,7 +246,7 @@
                         {% for activity in activities %}
                             {% if activity.date|date("j") == day %}
                                 {# Version Desktop (MD et +) #}
-                                <a href="{{ path('app_activity', {'id': activity.id}) }}" class="hidden md:flex flex-col items-center gap-2 mt-3 text-sm border border-sky-300 p-2 rounded-lg h-fit w-full">
+                                <a href="{{ path('app_activity', {'id': activity.id, 'month': currentMonth|date('Y-m'), 'service': selectedService ? selectedService.id : null}) }}" class="hidden md:flex flex-col items-center gap-2 mt-3 text-sm border border-sky-300 p-2 rounded-lg h-fit w-full">
                                     <p class="flex justify-between items-center gap-2 w-full">
                                         {% if activity.start and activity.end %}
                                             {{ activity.start|date("H:i") }} - {{ activity.end|date("H:i") }}
@@ -285,7 +277,7 @@
                                 </a>
 
                                 {# Version Mobile #}
-                                <a href="{{ path('app_activity', {'id': activity.id}) }}" class="md:hidden flex justify-center mt-1 relative">
+                                <a href="{{ path('app_activity', {'id': activity.id, 'month': currentMonth|date('Y-m'), 'service': selectedService ? selectedService.id : null}) }}" data-action="click->mobile-day#open" class="md:hidden flex justify-center mt-1 relative">
                                     <img src="{{ asset('images/' ~ activity.service.logo) }}" alt="{{ activity.service.name }}" class="w-8 h-8 object-cover rounded-full">
                                     {% if activity.canceled %}
                                         <div class="absolute top-0 right-0 z-20 bg-red-500 w-2 h-2 rounded-full"></div>
@@ -295,6 +287,43 @@
                                 </a>
                             {% endif %}
                         {% endfor %}
+
+                        <div data-mobile-day-target="modal" data-action="click->mobile-day#closeOnBackdrop" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                            <div class="w-full max-w-sm rounded-xl bg-white p-4 shadow-xl" role="dialog" aria-modal="true" aria-label="Activités du {{ dayDate|format_datetime(pattern='d MMMM yyyy', locale='fr') }}">
+                                <div class="mb-3 flex items-center justify-between gap-3">
+                                    <h3 class="text-lg font-semibold text-blue-700">Activités du {{ dayDate|format_datetime(pattern='d MMMM yyyy', locale='fr') }}</h3>
+                                    <button type="button" data-action="click->mobile-day#close" class="rounded px-2 py-1 text-xl text-gray-500" aria-label="Fermer">&times;</button>
+                                </div>
+                                <div class="flex flex-col gap-2">
+                                    {% set dayActivities = activities|filter(activity => activity.date|date('j') == day) %}
+                                    {% if dayActivities|length > 0 %}
+                                        {% for dayActivity in dayActivities %}
+                                            <a href="{{ path('app_activity', {'id': dayActivity.id, 'month': currentMonth|date('Y-m'), 'service': selectedService ? selectedService.id : null}) }}" data-action="click->mobile-day#navigate" class="grid grid-cols-2 items-center gap-3 rounded-lg border border-sky-200 p-3 hover:bg-sky-50">
+                                                <span class="flex flex-col gap-1 font-medium">
+                                                    <span>{{ dayActivity.service.name }}</span>
+                                                    {% if dayActivity.canceled or dayActivity.id in fullActivities %}
+                                                        <span class="w-fit rounded-full px-2 py-0.5 text-xs {{ dayActivity.canceled ? 'bg-red-500 text-white' : 'bg-yellow-500 text-black' }}">
+                                                            {{ dayActivity.canceled ? 'Annulée' : 'Complet' }}
+                                                        </span>
+                                                    {% endif %}
+                                                </span>
+                                                <span class="text-sm text-gray-600 text-right">
+                                                    {% if dayActivity.start and dayActivity.end %}
+                                                        {{ dayActivity.start|date('H:i') }} - {{ dayActivity.end|date('H:i') }}
+                                                    {% elseif dayActivity.start %}
+                                                        {{ dayActivity.start|date('H:i') }}
+                                                    {% else %}
+                                                        Horaires à définir
+                                                    {% endif %}
+                                                </span>
+                                            </a>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-sm text-gray-600">Aucune activité ce jour.</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                 {% endfor %}

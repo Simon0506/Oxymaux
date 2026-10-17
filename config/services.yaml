@@ -13,12 +13,16 @@ parameters:
     google_places_api_key: '%env(GOOGLE_PLACES_API_KEY)%'
     google_place_id: '%env(GOOGLE_PLACE_ID)%'
     maintenance_mode: '%env(bool:MAINTENANCE_MODE)%'
+    turnstile_site_key: '%env(TURNSTILE_SITE_KEY)%'
+    turnstile_secret_key: '%env(TURNSTILE_SECRET_KEY)%'
     
 
 services:
     # default configuration for services in *this* file
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
+        bind:
+            $turnstileSecretKey: '%turnstile_secret_key%'
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
 
     # makes classes in src/ available to be used as services
@@ -36,3 +40,10 @@ services:
     App\EventListener\MaintenanceListener:
         arguments:
             $maintenanceMode: '%maintenance_mode%'
+
+when@prod:
+    services:
+        app.monolog.json_with_trace:
+            class: Monolog\Formatter\JsonFormatter
+            arguments:
+                $includeStacktraces: true

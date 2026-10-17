@@ -43,7 +43,7 @@ when@prod:
                 type: stream
                 path: "%kernel.project_dir%/var/log/prod.log"
                 level: debug
-                formatter: monolog.formatter.json
+                formatter: app.monolog.json_with_trace
             console:
                 type: console
                 process_psr_3_messages: false

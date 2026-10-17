@@ -5,7 +5,7 @@
 {% block body %}
 
 <section class="max-w-7xl mx-auto mt-10 px-4">
-    <a href="{{ path('app_planning', {'month': activity.date|date('Y-m')}) }}" class="text-gray-600 hover:text-gray-800 transition duration-300">
+    <a href="{{ path('app_planning', {'month': app.request.query.get('month') ?: activity.date|date('Y-m'), 'service': app.request.query.get('service')}) }}" class="text-gray-600 hover:text-gray-800 transition duration-300">
         <i class="fa-solid fa-arrow-left"></i> Revenir au planning
     </a>
     <h1 class="text-4xl text-center mt-10 font-semibold">

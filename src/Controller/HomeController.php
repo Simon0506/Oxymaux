@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\DayOff;
 use App\Entity\Dog;
+use App\Entity\Activity;
 use App\Entity\Reservation;
 use App\Entity\User;
 use App\Form\DogType;
@@ -25,6 +26,7 @@ use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -57,7 +59,7 @@ final class HomeController extends AbstractController
     }
 
     #[Route('/planning/{month}', name: 'app_planning', requirements: ['month' => '\d{4}-\d{2}'], defaults: ['month' => null])]
-    public function planning(?string $month, ActivityRepository $activityRepository, ServiceRepository $serviceRepository, DayOffRepository $dayOffRepository): Response
+    public function planning(?string $month, Request $request, ActivityRepository $activityRepository, ServiceRepository $serviceRepository, DayOffRepository $dayOffRepository): Response
     {
         // 📅 Mois courant ou mois fourni dans l'URL
         $currentMonth = $month
@@ -90,8 +92,16 @@ final class HomeController extends AbstractController
         $typeFormation = DayOff::TYPE_FORMATION;
         $typeFerie = DayOff::TYPE_FERIE;
 
+        $selectedServiceId = $request->query->get('service');
+        $selectedServiceId = ctype_digit((string) $selectedServiceId) ? (int) $selectedServiceId : null;
+
         // Activités du mois à afficher
         $activities = $activityRepository->findByMonth($currentMonth->format('Y-m'));
+        if ($selectedServiceId !== null) {
+            $activities = array_values(array_filter($activities, static function (Activity $activity) use ($selectedServiceId): bool {
+                return $activity->getService()?->getId() === $selectedServiceId;
+            }));
+        }
         $services = [];
         foreach ($activities as $activity) {
             $service = $activity->getService();
@@ -125,6 +135,18 @@ final class HomeController extends AbstractController
             $upcomingActivities[$service->getId()] = $upcomingActivity;
         }
 
+        $selectedService = null;
+        $selectedUpcomingActivity = null;
+        if ($selectedServiceId !== null) {
+            foreach ($allServices as $service) {
+                if ($service->getId() === $selectedServiceId) {
+                    $selectedService = $service;
+                    $selectedUpcomingActivity = $upcomingActivities[$selectedServiceId] ?? null;
+                    break;
+                }
+            }
+        }
+
         return $this->render('home/planning.html.twig', [
             'currentMonth' => $currentMonth,
             'previousMonth' => $previousMonth,
@@ -135,6 +157,8 @@ final class HomeController extends AbstractController
             'services' => $services,
             'allServices' => $allServices,
             'upcomingActivities' => $upcomingActivities,
+            'selectedService' => $selectedService,
+            'selectedUpcomingActivity' => $selectedUpcomingActivity,
             'fullActivities' => $fullActivities,
             'dayOffs' => $dayOffs,
             'typeRepos' => $typeRepos,
@@ -191,12 +215,13 @@ final class HomeController extends AbstractController
     }
 
     #[Route('/contact', name: 'app_contact', methods: ['GET', 'POST'])]
-    public function contact(UserRepository $userRepository, Request $request, MailerInterface $mailer, CacheInterface $cache): Response
+    public function contact(UserRepository $userRepository, Request $request, MailerInterface $mailer, CacheInterface $cache, HttpClientInterface $httpClient, string $turnstileSecretKey): Response
     {
         $admin = $userRepository->findAdmin();
         if (!$request->isMethod('POST')) {
             return $this->render('home/contact.html.twig', [
                 'admin' => $admin,
+                'turnstile_site_key' => $this->getParameter('turnstile_site_key'),
             ]);
         }
 
@@ -215,6 +240,29 @@ final class HomeController extends AbstractController
         }
         if ($honeypot) {
             $this->addFlash('success', 'Votre message a été envoyé avec succès !');
+            return $this->redirectToRoute('app_contact');
+        }
+
+        $turnstileToken = (string) $request->request->get('cf-turnstile-response', '');
+        if ($turnstileToken === '' || $turnstileSecretKey === '') {
+            $this->addFlash('error', 'La vérification anti-spam est indisponible. Veuillez réessayer plus tard.');
+            return $this->redirectToRoute('app_contact');
+        }
+
+        try {
+            $turnstileResponse = $httpClient->request('POST', 'https://challenges.cloudflare.com/turnstile/v0/siteverify', [
+                'body' => [
+                    'secret' => $turnstileSecretKey,
+                    'response' => $turnstileToken,
+                    'remoteip' => $request->getClientIp(),
+                ],
+            ])->toArray(false);
+        } catch (\Throwable) {
+            $turnstileResponse = ['success' => false];
+        }
+
+        if (($turnstileResponse['success'] ?? false) !== true) {
+            $this->addFlash('error', 'La vérification anti-spam a échoué. Veuillez réessayer.');
             return $this->redirectToRoute('app_contact');
         }
 

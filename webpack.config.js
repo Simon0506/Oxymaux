@@ -45,8 +45,8 @@ Encore
     // .enableBuildNotifications()
 
     .enableSourceMaps(!Encore.isProduction())
-    // enables hashed filenames (e.g. app.abc123.css)
-    .enableVersioning(Encore.isProduction())
+    // Keep generated file names aligned with the manifests consumed by Symfony.
+    .enableVersioning(false)
 
     // configure Babel
     // .configureBabel((config) => {
