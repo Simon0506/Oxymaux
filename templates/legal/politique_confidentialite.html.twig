@@ -5,19 +5,61 @@
 {% block body %}
     <section class="max-w-7xl mx-auto mt-10 px-4">
         <h1 class="text-4xl text-center mt-20 font-semibold">Politique de Confidentialité</h1>
-        <div class="bg-white rounded-lg shadow-md shadow-sky-300 p-6 mt-10">
-            <h2 class="text-2xl font-semibold mb-4">1. Collecte des données personnelles</h2>
-            <p class="mb-4">Nous collectons des données personnelles telles que votre nom, adresse e-mail, et toute autre information que vous choisissez de fournir lors de l'utilisation de notre site.</p>
-            <h2 class="text-2xl font-semibold mb-4">2. Utilisation des données</h2>
-            <p class="mb-4">Les données collectées sont utilisées pour améliorer nos services, personnaliser votre expérience, et communiquer avec vous concernant nos offres et mises à jour.</p>
-            <h2 class="text-2xl font-semibold mb-4">3. Partage des données</h2>
-            <p class="mb-4">Nous ne partageons pas vos données personnelles avec des tiers, sauf si cela est nécessaire pour fournir nos services ou si la loi l'exige.</p>
-            <h2 class="text-2xl font-semibold mb-4">4. Sécurité des données</h2>
-            <p class="mb-4">Nous mettons en place des mesures de sécurité pour protéger vos données contre tout accès non autorisé ou divulgation.</p>
-            <h2 class="text-2xl font-semibold mb-4">5. Vos droits</h2>
-            <p class="mb-4">Vous avez le droit d'accéder à vos données personnelles, de les rectifier, de les supprimer, et de vous opposer à leur traitement. Pour exercer ces droits, veuillez nous contacter à l'adresse e-mail fournie sur notre site.</p>
-            <h2 class="text-2xl font-semibold mb-4">6. Modifications de la politique de confidentialité</h2>
-            <p class="mb-4">Nous nous réservons le droit de modifier cette politique de confidentialité à tout moment. Toute modification sera publiée sur cette page avec une date de mise à jour.</p>
+        <div class="bg-white rounded-lg shadow-md shadow-sky-300 p-6 mt-10 space-y-6">
+
+            <div>
+                <h2 class="text-2xl font-semibold mb-2">1. Responsable du traitement</h2>
+                <p>Le site Oxymaux est édité par Noémie Thonneau, auto-entrepreneuse en médiation animale (SIRET 90823810800017), située au 92 Rue Charles Hervé, 17750 Étale. Contact : <a href="mailto:contact@oxymaux17.com" class="underline">contact@oxymaux17.com</a>.</p>
+            </div>
+
+            <div class="mt-6">
+                <h2 class="text-2xl font-semibold mb-2">2. Données collectées et finalités</h2>
+                <ul class="list-disc list-inside space-y-2">
+                    <li><strong>Compte et réservations</strong> : nom, prénom, adresse, code postal, ville, téléphone, e-mail, photo du chien, réservations. Ces données servent à gérer votre compte et les inscriptions aux activités (base légale : l'exécution du contrat).</li>
+                    <li><strong>Formulaire de contact</strong> : nom, e-mail et message. Ces données ne sont pas conservées sur le site et servent uniquement à répondre à votre demande (base légale : l'intérêt légitime).</li>
+                    <li><strong>Protection anti-spam</strong> : Cloudflare Turnstile collecte votre adresse IP et des informations techniques pour vérifier que vous n'êtes pas un robot (base légale : l'intérêt légitime de sécuriser le site).</li>
+                    <li><strong>Avis Google</strong> : nous affichons sur notre page d'accueil des avis Google (nom, photo, note) récupérés via l'API Google (base légale : l'intérêt légitime de présenter notre activité).</li>
+                    <li><strong>Synchronisation Google Agenda</strong> : vos prénom et nom sont transmis à l'agenda Google de la gérante afin d'organiser les activités (base légale : l'exécution du contrat).</li>
+                </ul>
+            </div>
+
+            <div class="mt-6">
+                <h2 class="text-2xl font-semibold mb-2">3. Durée de conservation</h2>
+                <ul class="list-disc list-inside space-y-2">
+                    <li>Compte et données associées : jusqu'à suppression de votre compte. Après 3 ans d'inactivité, vous êtes prévenu par e-mail ; sans connexion de votre part, le compte est supprimé automatiquement.</li>
+                    <li>Après suppression du compte, les réservations passées sont anonymisées (elles ne sont plus rattachées à vos coordonnées) et conservées pour la gestion comptable.</li>
+                    <li>Messages du formulaire de contact : le temps de répondre à la demande.</li>
+                    <li>Données transmises à Cloudflare Turnstile : durée déterminée par Cloudflare (généralement moins de 24 heures).</li>
+                </ul>
+            </div>
+
+            <div class="mt-6">
+                <h2 class="text-2xl font-semibold mb-2">4. Destinataires et transferts</h2>
+                <p>Vos données sont destinées à la gérante du site et, selon les fonctionnalités, à nos sous-traitants :</p>
+                <ul class="list-disc list-inside space-y-2 mt-2">
+                    <li><strong>IONOS</strong> (hébergement, France) : stocke les données du site.</li>
+                    <li><strong>Cloudflare</strong> (États-Unis) : reçoit votre IP pour la protection anti-spam, dans le cadre de son programme de protection des données (Cloudflare Data Privacy Framework).</li>
+                    <li><strong>Google</strong> (États-Unis) : reçoit vos prénom et nom pour l'agenda de la gérante, et affiche vos avis si vous en avez publié sur notre fiche Google.</li>
+                </ul>
+                <p class="mt-2">Nous ne partageons vos données avec aucun autre tiers, sauf obligation légale.</p>
+            </div>
+
+            <div class="mt-6">
+                <h2 class="text-2xl font-semibold mb-2">5. Vos droits</h2>
+                <p>Vous disposez d'un droit d'accès, de rectification, d'effacement, de limitation, de portabilité et d'opposition. Vous pouvez exercer ces droits directement depuis votre compte (consultation, modification, suppression) ou en nous écrivant à <a href="mailto:contact@oxymaux17.com" class="underline">contact@oxymaux17.com</a>.</p>
+                <p class="mt-2">Pour les traitements fondés sur l'intérêt légitime (protection anti-spam, avis Google), vous pouvez vous opposer en nous contactant. Vous pouvez aussi introduire une réclamation auprès de la <a href="https://www.cnil.fr" target="_blank" rel="noopener noreferrer" class="underline">CNIL</a>.</p>
+            </div>
+
+            <div class="mt-6">
+                <h2 class="text-2xl font-semibold mb-2">6. Sécurité</h2>
+                <p>Nous mettons en œuvre des mesures techniques et organisationnelles (chiffrement des mots de passe, contrôle d'accès, protection CSRF, captcha) pour protéger vos données.</p>
+            </div>
+
+            <div class="mt-6">
+                <h2 class="text-2xl font-semibold mb-2">7. Modifications de la politique</h2>
+                <p>Cette politique peut être mise à jour. Toute modification sera publiée sur cette page avec sa date.</p>
+            </div>
+            <p class="text-sm text-gray-400 italic text-right mt-6">Dernière mise à jour : Octobre 2026</p>
         </div>
     </section>
 {% endblock %}
